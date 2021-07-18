@@ -1,7 +1,8 @@
 import { mwn } from "mwn";
 import fs from "fs";
 import getAllFiles from "../utils/getAllFiles";
-import type { ClientOptions } from "../types";
+import md5Hash from "../utils/md5Hash";
+import type { ClientOptions, WPFile } from "../types";
 import { basename, dirname, extname } from "path";
 
 /**
@@ -59,9 +60,26 @@ export class Client {
       } else throw new Error(`"${options.cacheFile}" is not a valid dirrectory for "cacheFile"`)
     else throw new Error(`"${options.srcDirectory}" is not a valid directory for "srcDirectory"`);
   }
-  public run(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const pagesToEdit = new Map<string, string>();
+
+  /**
+   * Run the bot, going through all middlewares.
+   * @param commitComment - The default message to commit with
+   */
+  public run(commitComment: string): Promise<void> {
+    // i hate every part of this - Jullian 7/17/21
+    if (!this.initialized || this.running) throw new Error(`Could not run because it was not initialized or was already running.`);
+    return new Promise((resolve) => {
+      this.running = true;
+      const md5Hashes: Map<string, string> = new Map<string, string>();
+      try { 
+        const hashJSON = JSON.parse(fs.readFileSync(this.clientOptions!.cacheFile).toString());
+        // we can assume it didn't error, so continue
+        for (const [file, hash] of Object.entries<string>(hashJSON))
+          md5Hashes.set(file, hash);
+      } catch {}
+
+
+      const pagesToEdit = new Map<string, WPFile>();
       const files = getAllFiles(this.clientOptions!.srcDirectory);
 
       files.forEach(file => {
@@ -74,16 +92,75 @@ export class Client {
 
         namespace = ((namespace === this.clientOptions!.mainNamespace) ? "" : `${namespace}:`);
 
-        const folderDirectory = dirname(shortFileDirectory);
-        const folder = basename(folderDirectory);
+        let folderDirectory: string = dirname(shortFileDirectory);
+        let folder: string = basename(folderDirectory);
 
         let fileName: string = basename(shortFileDirectory);
         const longExtension = ((fileName.match(/\.(.*)/) || [])[0]) || "";
         const shortExtension = extname(fileName);
-        const fileNameWithoutExtension = basename(fileName, longExtension);
+        fileName = basename(fileName, longExtension);
 
-        if (fileName === folder) fileName = "";
+        // ex: Bruh/Bruh.lua -> Bruh
+        if (fileName === folder) {
+          folderDirectory = dirname(folderDirectory);
+          folder = basename(folderDirectory);
+        }
+
+        let wpFile: WPFile = { 
+          longExtension,
+          shortExtension,
+          source: content.toString(),
+          originalDirectory: file,
+          commitComment: commitComment,
+          shouldCommit: true,
+          path:`${namespace}${folderDirectory}/${fileName}`
+        };
+
+        if (wpFile.longExtension === ".doc.wikitext") wpFile.path = `${wpFile.path}/doc`;
+
+        if (this.clientOptions!.middlwares)
+          for (const middleware of this.clientOptions!.middlwares) {
+            if ((middleware.matchLongExtension && longExtension.match(middleware.matchLongExtension)) 
+              && (middleware.matchShortExtension && shortExtension.match(middleware.matchShortExtension)) 
+              && (middleware.matchPath && wpFile.path.match(middleware.matchPath))) 
+                wpFile = middleware.execute(this.clientOptions!.middlewareSettings || {}, wpFile);
+          }
         
+        if (wpFile.shouldCommit) pagesToEdit.set(wpFile.path, wpFile);
+      });
+
+      const allEdits: Promise<unknown>[] = [];
+      pagesToEdit.forEach((file) => {
+        if (!(md5Hashes.get(file.path) && md5Hash(file.source.trimEnd()) === md5Hashes.get(file.path)))
+          allEdits.push(new Promise((resolve) => {
+            setTimeout(() => {
+              this.mwnClient!.edit(file.path, (revision) => {
+                if (!(md5Hashes.get(file.path) && md5Hash(revision.content.trimEnd()) === md5Hash(file.source.trimEnd()))) {
+                  md5Hashes.set(file.path, md5Hash(file.source.trimEnd()));
+                  return {
+                    summary: file.commitComment,
+                    text: file.source
+                  }
+                } else return {};
+               })
+               .then(resolve)
+               .catch((error) => {
+                 if (error.code === "missingtitle")
+                  this.mwnClient!.create(file.path, file.source, commitComment).then(resolve).catch();
+               });
+            }, (allEdits.length + 1) * 10)
+          }));
+        });
+
+      Promise.all(allEdits).then(() => {
+        resolve(); 
+        this.running = false; 
+        const md5HashesJSON: Record<string, string> = {};
+        md5Hashes.forEach((value, key) => {
+          md5HashesJSON[key] = value;
+        });
+  
+        fs.writeFile(this.clientOptions!.cacheFile, JSON.stringify(md5HashesJSON), () => {});
       });
     })
   }

@@ -7,7 +7,7 @@ export interface WPFile {
   /**
    * The original directory of the file.
    */
-  originalDirectory: string;
+  readonly originalDirectory: string;
   /**
    * The short extension of the file, ex `.lua`, not including `.client.lua`
    */
@@ -48,7 +48,7 @@ export interface Middleware<Settings = Record<string, unknown>> {
   /**
    * The Regexp/string to match in the name of the file
    */
-  matchName?: RegExp | string;
+  matchPath?: RegExp | string;
   /**
    * The execute function of the middleware
    */
