@@ -128,34 +128,10 @@ export class Client {
           }
         
         if (wpFile.shouldCommit) pagesToEdit.set(wpFile.path, wpFile);
-      });
-      const allEdits: Promise<unknown>[] = [];
-      pagesToEdit.forEach((file) => {
-        if (!(md5Hashes.get(file.path) && md5Hash(file.source.trimEnd()) === md5Hashes.get(file.path)))
-          allEdits.push(new Promise((resolve) => {
-            setTimeout(() => {
-              this.mwnClient!.edit(file.path, (revision) => {
-                if (!(md5Hashes.get(file.path) && md5Hash(revision.content.trimEnd()) === md5Hash(file.source.trimEnd()))) {
-                  md5Hashes.set(file.path, md5Hash(file.source.trimEnd()));
-                  return {
-                    summary: file.commitComment,
-                    text: file.source
-                  }
-                } else return {};
-               })
-               .then(resolve)
-               .catch((error) => {
-                 if (error.code === "missingtitle")
-                  this.mwnClient!.create(file.path, file.source, commitComment).then(resolve).catch();
-               });
-            }, (allEdits.length + 1) * 10)
-          }));
-        });
-      Promise.all(allEdits).then(() => {
-        const md5HashesJSON: Record<string, string> = {};
-        md5Hashes.forEach((value, key) => {
-          md5HashesJSON[key] = value;
-        });
+        
+        const allEdits: Promise<unknown>[] = [];
+        pagesToEdit.forEach((file) => {
+          if (!(md5Hashes.get(file.path) && md5Hash(file.source.trimEnd()) === md5Hashes.get(file.path)))
             allEdits.push(new Promise((resolve) => {
               setTimeout(() => {
                 this.mwnClient!.edit(file.path, (revision) => {
