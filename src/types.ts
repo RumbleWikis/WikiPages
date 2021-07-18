@@ -85,7 +85,7 @@ export interface ClientOptions {
    */
   userAgent?: string;
   /**
-   * Middleware settings for middleware.
+   * Middleware settings for middleware, see https://github.com/RumbleWikis/WikiPages-Middleware for more info
    */
   middlewareSettings?: Record<string, Record<string, any>>;
   /**
@@ -95,15 +95,17 @@ export interface ClientOptions {
    */
   maxRetries?: number;
   /**
-   * The main namespace, `(main)` on MediaWiki
+   * The main namespace, `(main)` on MediaWiki.
+   * 
+   * Default `Main`
    */
   mainNamespace?: string;
   /**
-   * The middleware to add
+   * The middleware to add, see https://github.com/RumbleWikis/WikiPages-Middleware for more info.
    */
   middlwares?: Middleware[];
   /**
    * Start event to be called when ready.
    */
-  onReady?: (client?: Client) => void;
+  onReady?: (client: Client) => void;
 }
