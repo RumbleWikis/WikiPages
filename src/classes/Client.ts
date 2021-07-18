@@ -117,6 +117,7 @@ export class Client {
         };
 
         if (wpFile.longExtension === ".doc.wikitext") wpFile.path = `${wpFile.path}/doc`;
+        if (wpFile.shortExtension === ".css" || wpFile.shortExtension === ".js") wpFile.path = `${wpFile.path}${wpFile.longExtension}`;
 
         if (this.clientOptions!.middlwares)
           for (const middleware of this.clientOptions!.middlwares) {
