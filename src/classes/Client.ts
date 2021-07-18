@@ -154,14 +154,14 @@ export class Client {
         });
 
       Promise.all(allEdits).then(() => {
-        resolve(); 
-        this.running = false; 
         const md5HashesJSON: Record<string, string> = {};
         md5Hashes.forEach((value, key) => {
           md5HashesJSON[key] = value;
         });
   
-        fs.writeFile(this.clientOptions!.cacheFile, JSON.stringify(md5HashesJSON), () => {});
+        fs.writeFileSync(this.clientOptions!.cacheFile, JSON.stringify(md5HashesJSON));
+        resolve(); 
+        this.running = false; 
       });
     })
   }
