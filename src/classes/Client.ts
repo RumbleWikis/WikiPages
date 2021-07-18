@@ -1,5 +1,5 @@
 import { mwn } from "mwn";
-import fs from "fs";
+import * as fs from "fs";
 import getAllFiles from "../utils/getAllFiles";
 import md5Hash from "../utils/md5Hash";
 import type { ClientOptions, WPFile } from "../types";
@@ -12,7 +12,7 @@ export class Client {
   /**
    * Options for the Client, this can not be changed after initialization.
    */
-  public readonly clientOptions?: ClientOptions;
+  public clientOptions?: ClientOptions;
   /**
    * The initialization state.
    */
@@ -43,7 +43,7 @@ export class Client {
    */
   constructor(options: ClientOptions) {
     if (fs.existsSync(options.srcDirectory))
-      if (!fs.lstatSync(options.cacheFile).isDirectory()) {
+      if (fs.existsSync(options.cacheFile) ? !fs.lstatSync(options.cacheFile).isDirectory() : true) {
         this.clientOptions = this.clientOptions;
         mwn.init({
           apiUrl: options.apiUrl,
@@ -52,10 +52,10 @@ export class Client {
           password: options.password,
           userAgent: `${options.userAgent || "Instance"} (powered by @rumblewikis/wikipages)`
         }).then((client) => {
-          try { options.onReady && options.onReady(this) } catch {};
-
           this.initialized = true;
+          this.clientOptions = options;
           this.mwnClient = client;
+          try { if (options.onReady) options.onReady(this) } catch {};
         });
       } else throw new Error(`"${options.cacheFile}" is not a valid dirrectory for "cacheFile"`)
     else throw new Error(`"${options.srcDirectory}" is not a valid directory for "srcDirectory"`);
@@ -84,10 +84,10 @@ export class Client {
 
       files.forEach(file => {
         const content = fs.readFileSync(file);
-        let shortFileDirectory: string = file.slice(this.clientOptions!.srcDirectory.length);
+        let shortFileDirectory: string = file.slice(this.clientOptions!.srcDirectory.length + 1);
         const shortFileDirectorySplit = shortFileDirectory.split("/");
         // @ts-ignore: This will never be undefined
-        let namespace: string = shortFileSplit.shift();
+        let namespace: string = shortFileDirectorySplit.shift();
         shortFileDirectory = shortFileDirectorySplit.join("/");
 
         namespace = ((namespace === this.clientOptions!.mainNamespace) ? "" : `${namespace}:`);
@@ -113,7 +113,7 @@ export class Client {
           originalDirectory: file,
           commitComment: commitComment,
           shouldCommit: true,
-          path:`${namespace}${folderDirectory}/${fileName}`
+          path:`${namespace}${folderDirectory === "." ? "" : `${folderDirectory}/`}${fileName}`
         };
 
         if (wpFile.longExtension === ".doc.wikitext") wpFile.path = `${wpFile.path}/doc`;
@@ -129,7 +129,6 @@ export class Client {
         
         if (wpFile.shouldCommit) pagesToEdit.set(wpFile.path, wpFile);
       });
-
       const allEdits: Promise<unknown>[] = [];
       pagesToEdit.forEach((file) => {
         if (!(md5Hashes.get(file.path) && md5Hash(file.source.trimEnd()) === md5Hashes.get(file.path)))
@@ -152,16 +151,41 @@ export class Client {
             }, (allEdits.length + 1) * 10)
           }));
         });
-
       Promise.all(allEdits).then(() => {
         const md5HashesJSON: Record<string, string> = {};
         md5Hashes.forEach((value, key) => {
           md5HashesJSON[key] = value;
         });
+            allEdits.push(new Promise((resolve) => {
+              setTimeout(() => {
+                this.mwnClient!.edit(file.path, (revision) => {
+                  if (!(md5Hashes.get(file.path) && md5Hash(revision.content.trimEnd()) === md5Hash(file.source.trimEnd()))) {
+                    md5Hashes.set(file.path, md5Hash(file.source.trimEnd()));
+                    return {
+                      summary: file.commitComment,
+                      text: file.source
+                    }
+                  } else return {};
+                 })
+                 .then(resolve)
+                 .catch((error) => {
+                   if (error.code === "missingtitle")
+                    this.mwnClient!.create(file.path, file.source, commitComment).then(resolve).catch();
+                 });
+              }, (allEdits.length + 1) * 10)
+            }));
+          });
   
-        fs.writeFileSync(this.clientOptions!.cacheFile, JSON.stringify(md5HashesJSON));
-        resolve(); 
-        this.running = false; 
+        Promise.all(allEdits).then(() => {
+          const md5HashesJSON: Record<string, string> = {};
+          md5Hashes.forEach((value, key) => {
+            md5HashesJSON[key] = value;
+          });
+    
+          fs.writeFileSync(this.clientOptions!.cacheFile, JSON.stringify(md5HashesJSON));
+          resolve(); 
+          this.running = false;
+        });
       });
     })
   }
