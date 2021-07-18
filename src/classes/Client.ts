@@ -148,7 +148,7 @@ export class Client {
                    if (error.code === "missingtitle")
                     this.mwnClient!.create(file.path, file.source, commitComment).then(resolve).catch();
                  });
-              }, (allEdits.length + 1) * 10)
+              }, (allEdits.length + 1) * 10000)
             }));
           });
   
