@@ -146,7 +146,7 @@ export class Client {
                  .then(resolve)
                  .catch((error) => {
                    if (error.code === "missingtitle")
-                    this.mwnClient!.create(file.path, file.source, commitComment).then(resolve).catch();
+                    this.mwnClient!.create(file.path, file.source, file.commitComment).then(resolve).catch();
                  });
               }, (allEdits.length + 1) * 10000)
             }));
