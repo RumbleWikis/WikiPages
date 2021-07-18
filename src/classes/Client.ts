@@ -121,9 +121,9 @@ export class Client {
 
         if (this.clientOptions!.middlwares)
           for (const middleware of this.clientOptions!.middlwares) {
-            if ((middleware.matchLongExtension && longExtension.match(middleware.matchLongExtension)) 
-              && (middleware.matchShortExtension && shortExtension.match(middleware.matchShortExtension)) 
-              && (middleware.matchPath && wpFile.path.match(middleware.matchPath))) 
+            if ((middleware.matchLongExtension ? longExtension.match(middleware.matchLongExtension) : true) 
+              && (middleware.matchShortExtension ? shortExtension.match(middleware.matchShortExtension) : true) 
+              && (middleware.matchPath ? wpFile.path.match(middleware.matchPath) : true)) 
                 wpFile = middleware.execute(this.clientOptions!.middlewareSettings || {}, wpFile);
           }
         
