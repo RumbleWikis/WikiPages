@@ -2,8 +2,13 @@
   "name": "@rumblewikis/wikipages",
   "description": "Sync a fs folder with a MediaWiki wiki.",
   "version": "0.1.0",
-  "main": "src/index.ts",
-  "keywords": [],
+  "main": "out/index.js",
+  "keywords": [
+    "mediawiki",
+    "wiki",
+    "fandom",
+    "wikipages"
+  ],
   "author": "wikipages",
   "license": "MIT",
   "scripts": {
