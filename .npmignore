@@ -1,2 +1,6 @@
 src/
 tsconfig.json
+tests/
+package-lock.json
+.gitignore
+.vscode/
