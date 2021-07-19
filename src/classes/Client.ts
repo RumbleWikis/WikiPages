@@ -71,6 +71,7 @@ export class Client {
     return new Promise((resolve) => {
       this.running = true;
       const md5Hashes: Map<string, string> = new Map<string, string>();
+      const newMd5Hashes: Map<string, string> = new Map<string, string>();
       try { 
         const hashJSON = JSON.parse(fs.readFileSync(this.clientOptions!.cacheFile).toString());
         // we can assume it didn't error, so continue
@@ -136,7 +137,7 @@ export class Client {
               setTimeout(() => {
                 this.mwnClient!.edit(file.path, (revision) => {
                   if (!(md5Hashes.get(file.path) && md5Hash(revision.content.trimEnd()) === md5Hash(file.source.trimEnd()))) {
-                    md5Hashes.set(file.path, md5Hash(file.source.trimEnd()));
+                    newMd5Hashes.set(file.path, md5Hash(file.source.trimEnd()));
                     return {
                       summary: file.commitComment,
                       text: file.source
@@ -145,22 +146,24 @@ export class Client {
                  })
                  .then(resolve)
                  .catch((error) => {
-                   if (error.code === "missingtitle")
+                   if (error.code === "missingtitle") {
+                     newMd5Hashes.set(file.path, md5Hash(file.source.trimEnd()));
                     this.mwnClient!.create(file.path, file.source, file.commitComment).then(resolve).catch();
+                   }
                  });
               }, (allEdits.length + 1) * 10000)
             }));
           });
   
         Promise.all(allEdits).then(() => {
-          const md5HashesJSON: Record<string, string> = {};
-          md5Hashes.forEach((value, key) => {
-            md5HashesJSON[key] = value;
+          const newMd5HashesJSON: Record<string, string> = {};
+          newMd5Hashes.forEach((value, key) => {
+            newMd5HashesJSON[key] = value;
           });
     
-          fs.writeFileSync(this.clientOptions!.cacheFile, JSON.stringify(md5HashesJSON));
-          resolve(); 
+          fs.writeFileSync(this.clientOptions!.cacheFile, JSON.stringify(newMd5HashesJSON));
           this.running = false;
+          resolve(); 
         });
       });
     })
