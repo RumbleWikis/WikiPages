@@ -75,7 +75,7 @@ export interface ClientOptions {
    */
   srcDirectory: string;
   /**
-   * The directory to the file to place and search for cache in.
+   * The path to the file to place and search for cache in.
    */
   cacheFile: string;
   /**
