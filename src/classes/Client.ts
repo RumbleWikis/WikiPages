@@ -125,7 +125,7 @@ export class Client {
             if ((middleware.matchLongExtension ? longExtension.match(middleware.matchLongExtension) : true) 
               && (middleware.matchShortExtension ? shortExtension.match(middleware.matchShortExtension) : true) 
               && (middleware.matchPath ? wpFile.path.match(middleware.matchPath) : true)) 
-                wpFile = middleware.execute(this.clientOptions!.middlewareSettings || {}, wpFile);
+                wpFile = middleware.execute(wpFile, middleware.settingsIndex ? this.clientOptions!.middlewareSettings?.[middleware.settingsIndex] : undefined);
           }
         
         if (wpFile.shouldCommit) pagesToEdit.set(wpFile.path, wpFile);

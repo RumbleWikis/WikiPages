@@ -17,6 +17,73 @@
 # Dependencies
 * [mwn](https://www.npmjs.com/package/mwn)
 
+# Middlewares
+A list of approved middleware can be found [here](https://github.com/RumbleWikis/WikiPages-Middleware)
+
+Middlewares are a great way to implement things not implemented by the base package, such as compiling SASS files, or bundling TypeScript files. Middleware is extremely easy to make with a simple format, and will be called in order per file.
+
+To install middleware into a Client, define the `middlewares` property, and `middlewareSettings` if the middleware requires settings.
+```ts
+const wikipedia = new Client({
+  apiUrl: "https://en.wikipedia.org/api.php",
+  username: "Example",
+  password: "Example2",
+  srcDirectory: "Wikipedia/src/pages",
+  cacheFile: "md5cache.json",
+  middlewares: [middleware],
+  middlewareSettings: {
+    "sass": {
+      "foo": "bar"
+    }
+  }
+  onReady: (client) => {
+      // do client.run(commitMessage: string) whenever an event happens after ready, this is really ugly, yes
+  }
+});
+```
+
+The **middleware** being a Record with the following fields:
+
+* `matchShortExtension?: RegExp | string`
+  * The RegExp/string to match in the short extension,  ex `.lua`, not including `.client.lua`
+* `matchLongExtension?: RegExp | string`
+  * The RegExp/string to match in the long extension, ex `.client.lua`, not including **just** `.lua`
+* `matchPath?: Regexp | string`
+  * The Regexp/string to match in the path of the file
+* `settingsIndex?: string`
+  * The settings index to be indexed with
+* `execute: (file: WPFile, settings?: Record<string, Settings>) => WPFile`
+
+The `file`'s parameters are intended to be modified, and then resent. The file's parameters are as followed:
+
+* `readonly originalDirectory: string`
+  * The original directory of the file.
+* `shortExtension: string`
+  * The short extension of the file, ex `.lua`, not including `.client.lua`
+* `longExtension: string`
+  * The long extension o fthe file, ex `.client.lua`, not including **just** `.lua`
+* `commitComment: string`
+  * The comment for the MediaWiki commit
+* `shouldCommit: boolean`
+  * Whether or not it should commit when it goes through all middlewares
+* `path: string`
+  * THe new MediaWiki path of the file.
+* `source: string`
+  * The source string of the file.
+
+An example of a middleware is:
+```ts
+{
+  matchLongExtension: /^\.wikitext$/,
+  execute: (file) => {
+    return {
+      ...file,
+      content: "Wiki!"
+    }
+  }
+}
+```
+
 # Documentation
 <div align="center">NOTICE: This documentation is as of v0.1, usage may change drastically as it reaches a full release</div>
 
@@ -77,7 +144,7 @@ A new client can be constructed with the parameters:
   * The user agent for all requests.
   * This is a feature from **mwn**
 * `middlewareSettings?: Record<string, Record<string, any>>`
-  * Middleware settings for middleware, see https://github.com/RumbleWikis/WikiPages-Middleware for more info
+  * Middleware settings for middleware, see https://github.com/RumbleWikis/WikiPages#Middlwares for more info
 * `maxRetries?: number`
   * The maximum allowed of retries, will quit after the amount of retries.
   * This is a feature from **mwn**
@@ -85,7 +152,7 @@ A new client can be constructed with the parameters:
   * The main namespace, `(main)` on MediaWiki.
   * Default `Main`
 * `middlewares?: Middleware[]`
-  * The middleware to add, see https://github.com/RumbleWikis/WikiPages-Middleware for more info.
+  * The middleware to add, see https://github.com/RumbleWikis/WikiPages#Middlewares for more info.
 * `onReady?: (client: Client) => void`
   * Start event to be called when ready.
  

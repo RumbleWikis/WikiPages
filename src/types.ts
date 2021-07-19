@@ -33,10 +33,11 @@ export interface WPFile {
    */
   source: string;
 }
+
 /**
  * Middleware that will be called on every file found.
  */
-export interface Middleware<Settings = Record<string, unknown>> {
+export interface Middleware {
   /**
    * The RegExp/string to match in the short extension,  ex `.lua`, not including `.client.lua`
    */
@@ -46,13 +47,17 @@ export interface Middleware<Settings = Record<string, unknown>> {
    */
   matchLongExtension?: RegExp | string;
   /**
-   * The Regexp/string to match in the name of the file
+   * The Regexp/string to match in the path of the file
    */
   matchPath?: RegExp | string;
   /**
+   * The settings index to be indexed with
+   */
+  settingsIndex?: string;
+  /**
    * The execute function of the middleware
    */
-  execute: (settings: Record<string, Settings>, file: WPFile) => WPFile
+  execute: (file: WPFile, settings?: Record<string, unknown>) => WPFile
 }
 /**
  * Options for the Client, this can not be changed after initialization.
@@ -85,7 +90,7 @@ export interface ClientOptions {
    */
   userAgent?: string;
   /**
-   * Middleware settings for middleware, see https://github.com/RumbleWikis/WikiPages-Middleware for more info
+   * Middleware settings for middleware, see https://github.com/RumbleWikis/WikiPages#Middlewares for more info
    */
   middlewareSettings?: Record<string, Record<string, any>>;
   /**
@@ -101,7 +106,7 @@ export interface ClientOptions {
    */
   mainNamespace?: string;
   /**
-   * The middleware to add, see https://github.com/RumbleWikis/WikiPages-Middleware for more info.
+   * The middleware to add, see https://github.com/RumbleWikis/WikiPages#Middlewares for more info.
    */
   middlwares?: Middleware[];
   /**
