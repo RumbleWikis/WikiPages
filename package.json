@@ -14,7 +14,8 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc || echo",
-    "prepublishOnly": "tsc || echo"
+    "prepublishOnly": "tsc || echo",
+    "prepack": "tsc || echo"
   },
   "dependencies": {
     "mwn": "^0.11.1"
