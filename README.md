@@ -72,7 +72,7 @@ A new client can be constructed with the parameters:
 * `srcDirectory: string`
   * The directory to look for the source in.
 * `cacheFIle: string`
-  * The directory to the file to place and search for cache in.
+  * The path to the file to place and search for cache in.
 * `userAgent: string`
   * The user agent for all requests.
   * This is a feature from **mwn**
