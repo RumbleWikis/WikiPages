@@ -3,19 +3,22 @@
   "description": "Sync a fs folder with a MediaWiki wiki.",
   "version": "0.1.0",
   "main": "out/index.js",
+  "types": "out/index.d.ts",
   "keywords": [
     "mediawiki",
     "wiki",
     "fandom",
     "wikipages"
   ],
-  "author": "wikipages",
+  "author": "rumblewikis",
   "license": "MIT",
   "scripts": {
-    "build": "tsc || echo"
+    "prepublishOnly": "tsc || echo"
   },
   "dependencies": {
-    "mwn": "^0.11.1",
+    "mwn": "^0.11.1"
+  },
+  "devDependencies": {
     "typescript": "^4.3.5"
   },
   "repository": {
