@@ -20,6 +20,15 @@
 # Documentation
 <div align="center">NOTICE: This documentation is as of v0.1, usage may change drastically as it reaches a full release</div>
 
+## Path Resolving
+MediaWiki's URL paths are not delightful to look at, this repository will <b>not</b> handle it the same way. (i.e:  MediaWiki's used format allows for `Module:Test` and `Module:Test/doc` to exist simultaneously as files).
+* Only files read recursively from `srcDirectory` in the config will be considered and read.
+* The highest ancestor of a file will determine the namespace it will be located at (i.e: `{srcDirectory}/Module/Test.lua` will be located at `Module:Test`)
+* The extension of all files will be removed from the filename except for the `.js` and `.css` extensions.
+* If the highest ancestor is the same value as `mainDirectory`, by default "Main", it will be considered to be in the main namespace (i.e: `{srcDirectory}/Main/Doggy.wikitext` will be located at `Doggy`).
+* If a file's basename is the same string as its direct parent, it will be considered to have the path of its directory (i.e: `{srcDirectory}/Module/Test/Test.lua` will be located at `Module:Test`).
+* If a file's extension is `.doc.wikitext`, it will be located at its basename appeneded by `/doc`
+
 ## Setup
 ### Starters
 1. Download and install Node from the [NodeJS website](https://nodejs.org), this will also install npm
