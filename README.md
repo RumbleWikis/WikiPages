@@ -52,7 +52,10 @@ The **middleware** being a Record with the following fields:
   * The Regexp/string to match in the path of the file
 * `settingsIndex?: string`
   * The settings index to be indexed with
-* `execute: (file: WPFile, settings?: Record<string, Settings>) => WPFile`
+* `execute: (file: WPFile, settings?: Record<string, unknown>) => WPFile`
+
+The `settings` will index the `middlewareSettings` on the client with `settingsIndex` if defined, and define it as the parameter.
+
 
 The `file`'s parameters are intended to be modified, and then resent. The file's parameters are as followed:
 
