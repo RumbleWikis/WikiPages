@@ -84,9 +84,9 @@ A new client can be constructed with the parameters:
 * `mainNamespace?: string`
   * The main namespace, `(main)` on MediaWiki.
   * Default `Main`
-* `middlewares?: Middleware[`
+* `middlewares?: Middleware[]
   * The middleware to add, see https://github.com/RumbleWikis/WikiPages-Middleware for more info.
-*``onReady?: (client: Client) => void`
+* `onReady?: (client: Client) => void`
   * Start event to be called when ready.
  
 `public clientOptions: ClientOptions`
