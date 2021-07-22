@@ -42,23 +42,21 @@ export class Client {
    * @param options - The client options.
    */
   constructor(options: ClientOptions) {
-    if (fs.existsSync(options.srcDirectory))
-      if (fs.existsSync(options.cacheFile) ? !fs.lstatSync(options.cacheFile).isDirectory() : true) {
-        this.clientOptions = this.clientOptions;
-        mwn.init({
-          apiUrl: options.apiUrl,
-          maxRetries: options.maxRetries,
-          username: options.username,
-          password: options.password,
-          userAgent: `${options.userAgent || "Instance"} (powered by @rumblewikis/wikipages)`
-        }).then((client) => {
-          this.initialized = true;
-          this.clientOptions = options;
-          this.mwnClient = client;
-          try { if (options.onReady) options.onReady(this) } catch {};
-        });
-      } else throw new Error(`"${options.cacheFile}" is not a valid dirrectory for "cacheFile"`)
-    else throw new Error(`"${options.srcDirectory}" is not a valid directory for "srcDirectory"`);
+    if (fs.existsSync(options.cacheFile) ? !fs.lstatSync(options.cacheFile).isDirectory() : true) {
+      this.clientOptions = this.clientOptions;
+      mwn.init({
+        apiUrl: options.apiUrl,
+        maxRetries: options.maxRetries,
+        username: options.username,
+        password: options.password,
+        userAgent: `${options.userAgent || "Instance"} (powered by @rumblewikis/wikipages)`
+      }).then((client) => {
+        this.initialized = true;
+        this.clientOptions = options;
+        this.mwnClient = client;
+        try { if (options.onReady) options.onReady(this) } catch {};
+      });
+    } else throw new Error(`"${options.cacheFile}" is not a valid dirrectory for "cacheFile"`)
   }
 
   /**

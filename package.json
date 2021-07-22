@@ -1,7 +1,7 @@
 {
   "name": "@rumblewikis/wikipages",
   "description": "Sync a fs folder with a MediaWiki wiki.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "out/index.js",
   "types": "out/index.d.ts",
   "keywords": [
