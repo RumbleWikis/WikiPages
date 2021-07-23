@@ -73,7 +73,7 @@ export interface Middleware {
 }
 
 /**
- * Options for the Client, this can be changed with `client.setSettings()`.
+ * Options for the Client, this can be changed with.
  */
 export interface ClientOptions {
   /**
@@ -113,7 +113,7 @@ export interface ClientOptions {
    */
   mainNamespace?: string;
   /**
-   * The array middlewares to add, see https://github.com/RumbleWikis/WikiPages#Middlewares for more info.
+   * The array of middlewares to add, see https://github.com/RumbleWikis/WikiPages#Middlewares for more info. More middleware can be added later with `client.addMiddlewares(...)`.
    */
   middlwares?: Middleware[];
 }

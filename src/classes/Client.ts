@@ -49,7 +49,7 @@ export class Client extends Evt<
    *   apiUrl: "https://en.wikipedia.org/api.php",
    * })
    * ```
-   * @param options - The client options, note that this can be changed later with `client.setSettings()`.
+   * @param options - The client options.
    */
   constructor(options: ClientOptions) {
     super()
