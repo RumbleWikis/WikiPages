@@ -4,7 +4,8 @@ import getAllFiles from "../utils/getAllFiles";
 import md5Hash from "../utils/md5Hash";
 import { Evt, to } from "evt";
 import { basename, dirname, extname } from "path";
-import type { ClientOptions, Middleware, WPFile } from "../types";
+import { WPFile } from "./WPFile";
+import type { ClientOptions, Middleware } from "../types";
 
 /**
  * The WikiPages Client.
@@ -148,42 +149,39 @@ export class Client extends Evt<
           folder = basename(folderDirectory);
         }
 
-        // TODO: WPFile class
-        let wpFile: WPFile = { 
-          longExtension,
-          originalLongExtension: longExtension,
-          shortExtension,
-          originalShortExtension: shortExtension,
+        const wpFile = new WPFile({
           commitComment,
-          source: content.toString(),
+          originalLongExtension: longExtension,
+          originalShortExtension: shortExtension,
           originalPath: file,
+          source: content.toString(),
           shouldCommit: true,
           path:`${namespace}${folderDirectory === "." ? "" : `${folderDirectory}/`}${fileName}`
-        };
+        });
 
         // Change bruh.doc.wikitext to bruh/doc
-        if (wpFile.longExtension === ".doc.wikitext") wpFile.path = `${wpFile.path}/doc`;
-        if (wpFile.shortExtension === ".css" || wpFile.shortExtension === ".js") wpFile.path = `${wpFile.path}${wpFile.longExtension}`;
+        if (wpFile.originalLongExtension === ".doc.wikitext") wpFile.path = `${wpFile.path}/doc`;
+        if (wpFile.originalShortExtension === ".css" || wpFile.originalShortExtension === ".js") wpFile.path = `${wpFile.path}${wpFile.originalLongExtension}`;
 
         if (this._clientOptions!.middlewares)
           for (const middleware of this._clientOptions!.middlewares) {
             if ((middleware.matchLongExtension ? longExtension.match(middleware.matchLongExtension) : true) 
               && (middleware.matchShortExtension ? shortExtension.match(middleware.matchShortExtension) : true) 
-              && (middleware.matchPath ? wpFile.path.match(middleware.matchPath) : true)) 
-                wpFile = middleware.execute(wpFile, middleware.settingsIndex ? this._clientOptions!.middlewareSettings?.[middleware.settingsIndex] : undefined);
+              && (middleware.matchPath ? wpFile.path!.match(middleware.matchPath) : true)) 
+                middleware.execute(wpFile, middleware.settingsIndex ? this._clientOptions!.middlewareSettings?.[middleware.settingsIndex] : undefined);
           }
         
-        if (wpFile.shouldCommit) pagesToEdit.set(wpFile.path, wpFile);
+        if (wpFile.shouldCommit) pagesToEdit.set(wpFile.path!, wpFile);
       });
 
       const allEdits: Promise<unknown>[] = [];
       pagesToEdit.forEach((file) => {
-        if (!(md5Hashes.get(file.path) && (md5Hash(file.source.trimEnd()) === md5Hashes.get(file.path))))
+        if (!(md5Hashes.get(file.path!) && (md5Hash(file.source!.trimEnd()) === md5Hashes.get(file.path!))))
           allEdits.push(new Promise((resolve) => {
             setTimeout(() => {
-              this._mwnClient!.edit(file.path, (revision) => {
-                if (!(md5Hashes.get(file.path) && md5Hash(revision.content.trimEnd()) === md5Hash(file.source.trimEnd()))) {
-                  newMd5Hashes.set(file.path, md5Hash(file.source.trimEnd()));
+              this._mwnClient!.edit(file.path!, (revision) => {
+                if (!(md5Hashes.get(file.path!) && md5Hash(revision.content.trimEnd()) === md5Hash(file.source!.trimEnd()))) {
+                  newMd5Hashes.set(file.path!, md5Hash(file.source!.trimEnd()));
                   return {
                     summary: file.commitComment,
                     text: file.source
@@ -193,8 +191,8 @@ export class Client extends Evt<
               .then(resolve)
               .catch((error) => {
                 if (error.code === "missingtitle") {
-                  newMd5Hashes.set(file.path, md5Hash(file.source.trimEnd()));
-                  this._mwnClient!.create(file.path, file.source, file.commitComment).then(resolve).catch((error) => {
+                  newMd5Hashes.set(file.path!, md5Hash(file.source!.trimEnd()));
+                  this._mwnClient!.create(file.path!, file.source!, file.commitComment).then(resolve).catch((error) => {
                     this.post(["createError", file, error]);
                   });
                 } else this.post(["editError", file, error])

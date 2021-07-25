@@ -1,47 +1,43 @@
+import type { WPFile } from "./classes/WPFile";
+
 /**
- * A file to be handled by client middlewares.
+ * Options to change in a properties for a WPFile class after construction.
  */
-export interface WPFile {
-  /**
-   * The original path of where the file was located.
-   */
-  readonly originalPath: string;
-  /**
-   * The short extension of the file, ex `.lua`, not including `.client.lua`.
-   * 
-   * See `originalShortExtension` for the original short extension.
-   */
-  shortExtension: string;
-  /**
-   * The original short extension of the original file, ex `.lua`, not including `.client.lua`.
-   */
-  readonly originalShortExtension: string;
-  /**
-   * The long extension o fthe file, ex `.client.lua`, not including **just** `.lua`
-   * 
-   * See `originalLongExtension` for the original long extension.
-   */
-  longExtension: string;
-  /*
-   * The original long extension of the original file, ex `.lua`, not including `.client.lua`.
-   */
-   readonly originalLongExtension: string;
-  /**
-   * The default (or modified) comment for the MediaWiki commit, "edit comment".
-   */
-  commitComment: string;
+export interface WPFileChangeOptions {
   /**
    * Whether or not it should be committed to the site after finished going through the middlewares.
    */
-  shouldCommit: boolean;
-  /**
-   * THe MediaWiki path of where the page would be. (MediaWiki/Common.js -> MediaWiki:Common.js)
+  shouldCommit?: boolean;
+   /*
+   * The default (or modified) comment for the MediaWiki commit, "edit comment".
    */
-  path: string;
+  commitComment?: string;
+   /**
+    * THe MediaWiki path of where the page would be. (MediaWiki/Common.js -> MediaWiki:Common.js)
+    */
+  path?: string;
   /**
-   * The source string of the file, can be modified.
+   * The source string of the file, intended to be modified by middlewares.
    */
-  source: string;
+  source?: string;
+}
+
+/**
+ * Options for initial construction of a WPFile class, some can not be changed later.
+ */
+export interface WPFileOptions extends WPFileChangeOptions {
+  /**
+   * The original path of where the file was located
+   */
+  originalPath: string;
+  /**
+   * The original long extension of the original file, ex `.lua`, not including `.client.lua`.
+   */
+  originalLongExtension: string;
+  /**
+   * The original short extension of the original file, ex `.lua`, not including `.client.lua`.
+   */
+  originalShortExtension: string;
 }
 
 /**
