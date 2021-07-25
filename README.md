@@ -204,15 +204,15 @@ Client.$attach(to("editError"), ({ file, error }) => {
 ```
 
 The available event names are:
-* ready
-  * undefined
-* loginError
-  * { error: any }
-* runningStarted
-  * undefined
-* runningEnded
-  * undefined
-* editError
-  * { file: WPFile, error: any }
-* createError
-  * { file: WPFile, error: any }
+* `ready`
+  * `undefined`
+* `loginError`
+  * `{ error: any }`
+* `runningStarted`
+  *` undefined`
+* `runningEnded`
+  * `undefined`
+* `editError`
+  * `{ file: WPFile, error: any }`
+* `createError`
+  * `{ file: WPFile, error: any }`
