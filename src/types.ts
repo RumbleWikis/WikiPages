@@ -12,9 +12,9 @@ export interface WPFileChangeOptions {
    * The default (or modified) comment for the MediaWiki commit, "edit comment".
    */
   commitComment?: string;
-   /**
-    * THe MediaWiki path of where the page would be. (MediaWiki/Common.js -> MediaWiki:Common.js)
-    */
+  /**
+  * THe MediaWiki path of where the page would be. (MediaWiki/Common.js -> MediaWiki:Common.js)
+  */
   path?: string;
   /**
    * The source string of the file, intended to be modified by middlewares.
@@ -27,7 +27,7 @@ export interface WPFileChangeOptions {
  */
 export interface WPFileOptions extends WPFileChangeOptions {
   /**
-   * The original path of where the file was located
+   * The original path of where the file was located.
    */
   originalPath: string;
   /**
