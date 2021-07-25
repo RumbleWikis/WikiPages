@@ -1,2 +1,2 @@
-export { Client } from "./classes/Client";
+export { Client, to } from "./classes/Client";
 export * from "./types";

@@ -12,10 +12,11 @@ import type { ClientOptions, Middleware } from "../types";
  */
 export class Client extends Evt<
 ["ready", undefined] | 
+["loginError", { error: any }] |
 ["runningStarted", undefined] | 
 ["runningEnded", undefined] |
-["editError", WPFile, any] |
-["createError", WPFile, any]
+["editError", { file: WPFile, error: any}] |
+["createError", { file: WPFile, error: any}]
 > {
   /**
    * Client options for the client, this can be changed later **when** the client is not running.
@@ -70,12 +71,15 @@ export class Client extends Evt<
         maxRetries: options.maxRetries,
         username: options.username,
         password: options.password,
-        userAgent: `${options.userAgent ?? "Instance"} (powered by @rumblewikis/wikipages)`
+        userAgent: `${options.userAgent ?? "Instance"} (powered by @rumblewikis/wikipages)`,
+        silent: true
       }).then((client) => {
         this._initialized = true;
         this._clientOptions = options;
         this._mwnClient = client;
         this.post(["ready", undefined]);
+      }).catch((error) => {
+        this.post(["loginError", { error }]);
       });
     } else throw new Error(`"${options.cacheFile}" is not a valid dirrectory for "cacheFile"`)
   }
@@ -193,9 +197,9 @@ export class Client extends Evt<
                 if (error.code === "missingtitle") {
                   newMd5Hashes.set(file.path!, md5Hash(file.source!.trimEnd()));
                   this._mwnClient!.create(file.path!, file.source!, file.commitComment).then(resolve).catch((error) => {
-                    this.post(["createError", file, error]);
+                    this.post(["createError", { file, error}]);
                   });
-                } else this.post(["editError", file, error])
+                } else this.post(["editError", { file, error }])
               });
             }, (allEdits.length + 1) * 10000)
           }));
