@@ -209,7 +209,7 @@ The available event names are:
 * `loginError`
   * `{ error: any }`
 * `runningStarted`
-  *` undefined`
+  * ` undefined`
 * `runningEnded`
   * `undefined`
 * `editError`
