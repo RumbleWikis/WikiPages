@@ -1,5 +1,3 @@
-import { Client } from "./classes/Client";
-
 /**
  * A file to be handled by client middlewares.
  */
@@ -115,5 +113,5 @@ export interface ClientOptions {
   /**
    * The array of middlewares to add, see https://github.com/RumbleWikis/WikiPages#Middlewares for more info. More middleware can be added later with `client.addMiddlewares(...)`.
    */
-  middlwares?: Middleware[];
+  middlewares?: Middleware[];
 }

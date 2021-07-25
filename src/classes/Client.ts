@@ -4,7 +4,7 @@ import getAllFiles from "../utils/getAllFiles";
 import md5Hash from "../utils/md5Hash";
 import { Evt, to } from "evt";
 import { basename, dirname, extname } from "path";
-import type { ClientOptions, WPFile } from "../types";
+import type { ClientOptions, Middleware, WPFile } from "../types";
 
 /**
  * The WikiPages Client.
@@ -80,7 +80,28 @@ export class Client extends Evt<
   }
 
   /**
-   * Run the bot, going through all middlewares, and then pushing the files with `shouldCommit` as true to the site.
+   * Add new middleware to the existing middlewares array. This can not be run while an instance is already active.
+   * @param middleware - The array of middleware to add to the Client. Middleware can not be removed easily later.
+   */
+  public addMiddlewares(...middleware: Middleware[]): void {
+    if (this._running) throw new Error(`Could not run because it was already running.`);
+    (this._clientOptions!.middlewares ||= []).concat(middleware);
+  }
+
+  /**
+   * Add new settings to the existing middleware settings. This can not be run while an instance is already active.
+   * @param settings - The settings to add, can override existing ones.
+   */
+  public setMiddlewareSettings(settings: Record<string, Record<string, unknown>>): void {
+    if (this._running) throw new Error(`Could not run because it was already running.`);
+    this._clientOptions!.middlewareSettings = {
+      ...this._clientOptions!.middlewareSettings,
+      ...settings
+    }
+  }
+
+  /**
+   * Run the bot, going through all middlewares, and then pushing the files with `shouldCommit` as true to the site. This can not be run while an instance is already active.
    * @param commitComment - The default message to commit with, can be changed by the middlewares.
    */
   public run(commitComment: string): Promise<void> {
@@ -144,8 +165,8 @@ export class Client extends Evt<
         if (wpFile.longExtension === ".doc.wikitext") wpFile.path = `${wpFile.path}/doc`;
         if (wpFile.shortExtension === ".css" || wpFile.shortExtension === ".js") wpFile.path = `${wpFile.path}${wpFile.longExtension}`;
 
-        if (this._clientOptions!.middlwares)
-          for (const middleware of this._clientOptions!.middlwares) {
+        if (this._clientOptions!.middlewares)
+          for (const middleware of this._clientOptions!.middlewares) {
             if ((middleware.matchLongExtension ? longExtension.match(middleware.matchLongExtension) : true) 
               && (middleware.matchShortExtension ? shortExtension.match(middleware.matchShortExtension) : true) 
               && (middleware.matchPath ? wpFile.path.match(middleware.matchPath) : true)) 
