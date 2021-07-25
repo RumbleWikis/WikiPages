@@ -216,3 +216,5 @@ export class Client extends Evt<
     })
   }
 }
+
+export { to };
