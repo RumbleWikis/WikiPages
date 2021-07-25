@@ -3,7 +3,7 @@
     <p>
         <b>WikiPages</b>
         <br />
-        Sync wiki pages on a <b>MediaWiki wiki</b> with possible <b>configurations</b> and <b>middlware</b> from a filesystem, upon <b>call</b>
+        Sync wiki pages on a <b>MediaWiki wiki</b> with possible <b>configurations</b> and <b>middleware</b> from a filesystem, upon <b>call</b>
     </p>
     <p>
         <a href="//github.com/RumbleWikis/WikiPages/blob/main/LICENSE"><image src="https://img.shields.io/github/license/RumbleWikis/WikiPages" /></a>
@@ -147,7 +147,7 @@ A new client can be constructed with the parameters:
   * The user agent for all requests.
   * This is a feature from **mwn**
 * `middlewareSettings?: Record<string, Record<string, any>>`
-  * Middleware settings for middleware, see https://github.com/RumbleWikis/WikiPages#Middlwares for more info
+  * Middleware settings for middleware, see https://github.com/RumbleWikis/WikiPages#Middlewares for more info
 * `maxRetries?: number`
   * The maximum allowed of retries, will quit after the amount of retries.
   * This is a feature from **mwn**
