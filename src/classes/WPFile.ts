@@ -49,10 +49,10 @@ export class WPFile {
    * Change the properties with an interface.
    */
   public change(options: WPFileChangeOptions): WPFile {
-    if (options.shouldCommit) options.shouldCommit = this.shouldCommit;
-    if (options.commitComment) options.commitComment = this.commitComment;
-    if (options.path) options.path = this.path;
-    if (options.source) options.source = this.source;
+    if (options.shouldCommit) this.shouldCommit = options.shouldCommit;
+    if (options.commitComment) this.commitComment = options.commitComment;
+    if (options.path) this.path = options.path;
+    if (options.source) this.source = options.source;
 
     return this;
   }
