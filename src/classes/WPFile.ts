@@ -1,3 +1,4 @@
+import { ApiOptionsParams } from "mwn/build/api_params";
 import type { WPFileChangeOptions, WPFileOptions } from "../types";
 
 /**
@@ -49,10 +50,9 @@ export class WPFile {
    * Change the properties with an interface.
    */
   public change(options: WPFileChangeOptions): WPFile {
-    if (options.hasOwnProperty("shouldCommit")) this.shouldCommit = options.shouldCommit;
-    if (options.hasOwnProperty("commitComment")) this.commitComment = options.commitComment;
-    if (options.hasOwnProperty("path")) this.path = options.path;
-    if (options.hasOwnProperty("source")) this.source = options.source;
+    for (const key in options)
+      // @ts-ignore: Everything should be OK. The field should have the same type on Options and this.
+      this[key as keyof WPFileChangeOptions] = options[key as keyof WPFileChangeOptions];
 
     return this;
   }

@@ -165,7 +165,7 @@ export class Client extends Evt<
 
         // Change bruh.doc.wikitext to bruh/doc
         if (wpFile.originalLongExtension === ".doc.wikitext") wpFile.path = `${wpFile.path}/doc`;
-        if (wpFile.originalShortExtension === ".css" || wpFile.originalShortExtension === ".js") wpFile.path = `${wpFile.path}${wpFile.originalLongExtension}`;
+        if (wpFile.originalShortExtension === ".css" || wpFile.originalShortExtension === ".js") wpFile.path = `${wpFile.path}${wpFile.originalShortExtension}`;
 
         if (this._clientOptions!.middlewares)
           for (const middleware of this._clientOptions!.middlewares) {
