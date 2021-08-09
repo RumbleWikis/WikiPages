@@ -3,7 +3,8 @@ import yargs from "yargs/yargs";
 import * as process from "process";
 import type { Argv } from "yargs";
 
-// ["run", "start"] ["build"] ["test"] TODO
+// TODO: ["run", "start"] ["build"] ["test"]
+// Need to improve basic library before CLI
 yargs(process.argv.slice(2))
 .scriptName("wikipages")
 .version()
@@ -18,7 +19,23 @@ yargs(process.argv.slice(2))
   aliases: ["start"],
   describe: "TODO",
   builder: (yargs: Argv) => yargs.default("project", "default.wiki.js").default("comment", "Commit via WikiPages CLI"),
-  handler: (args) => {
+  handler: (argv) => {
+    // TODO
+  }
+})
+.command({
+  command: "build [file]",
+  describe: "TODO",
+  builder: (yargs: Argv) => yargs.default("project", "default.wiki.js").string("file"),
+  handler: (argv) => {
+    // TODO
+  }
+})
+.command({
+  command: "test [file]",
+  describe: "TODO",
+  builder: (yargs: Argv) => yargs.default("project", "default.wiki.js").string("file"),
+  handler: (argv) => {
     // TODO
   }
 })
