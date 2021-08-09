@@ -4,6 +4,9 @@
   "version": "0.2.0",
   "main": "out/index.js",
   "types": "out/index.d.ts",
+  "bin": {
+    "wikipages": "out/cli/index.js"
+  },
   "keywords": [
     "mediawiki",
     "wiki",
@@ -19,9 +22,11 @@
   },
   "dependencies": {
     "evt": "^1.10.1",
-    "mwn": "^0.11.1"
+    "mwn": "^0.11.1",
+    "yargs": "^17.0.1"
   },
   "devDependencies": {
+    "@types/yargs": "^17.0.2",
     "typescript": "^4.3.5"
   },
   "repository": {
