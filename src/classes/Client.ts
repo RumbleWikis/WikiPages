@@ -19,6 +19,30 @@ export class Client extends Evt<
 ["createError", { file: WPFile, error: unknown }]
 > {
   /**
+   * Creates a new WikiPages Client and logs in with a Promise
+   * ```
+   * Client.init({
+   *   username: "Username",
+   *   password: "Password",
+   *   srcDirectory: "src/",
+   *   cacheFile: "cache.json",
+   *   apiUrl: "https://en.wikipedia.org/api.php",
+   * }).then((client) => {
+   *   ...
+   * }).catch((error) => {
+   *   ...
+   * })
+   * ```
+   * @param options - The client options.
+   */
+  static init(options: ClientOptions): Promise<Client> {
+    const client = new this(options);
+    return new Promise((resolve, reject) => {
+      client.login().then(() => resolve(client)).catch(error => reject(error));
+    });
+  }
+
+  /**
    * Client options for the client, this can be changed later **when** the client is not running.
    */
   private _clientOptions?: ClientOptions;
@@ -66,22 +90,28 @@ export class Client extends Evt<
     super()
     if (fs.existsSync(options.cacheFile) ? !fs.lstatSync(options.cacheFile).isDirectory() : true) {
       this._clientOptions = options;
-      mwn.init({
+      this._mwnClient = new mwn({
         apiUrl: options.apiUrl,
         maxRetries: options.maxRetries,
         username: options.username,
         password: options.password,
         userAgent: `${options.userAgent ?? "Instance"} (powered by @rumblewikis/wikipages)`,
         silent: true
-      }).then((client) => {
-        this._initialized = true;
-        this._clientOptions = options;
-        this._mwnClient = client;
-        this.post(["ready", undefined]);
-      }).catch((error) => {
-        this.post(["loginError", { error }]);
       });
     } else throw new Error(`"${options.cacheFile}" is not a valid dirrectory for "cacheFile"`)
+  }
+
+  public login(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this._mwnClient!.login().then(() => {
+        this._initialized = true;
+        this.post(["ready", undefined]);
+        resolve();
+      }).catch((error) => {
+        this.post(["loginError", { error }]);
+        reject(error);
+      });
+    });
   }
 
   /**
@@ -106,13 +136,30 @@ export class Client extends Evt<
   }
 
   /**
+   * Parses a file name from a file system directory to MediaWiki directory
+   * @param fileName - The name of the file from the File System.
+   */
+  public parseFileName(fileName: string): string {
+    // TO-DO
+  }
+
+  /**
+   * Passes a file through all middlewares
+   */
+  public buildFile(file: WPFile): Promise<WPFile> {
+    return new Promise((resolve, reject) => {
+      // TO-DO
+    });
+  }
+
+  /**
    * Run the bot, going through all middlewares, and then pushing the files with `shouldCommit` as true to the site. This can not be run while an instance is already active.
    * @param commitComment - The default message to commit with, can be changed by the middlewares.
    */
   public run(commitComment: string): Promise<void> {
     // Jullian(7/17/21): i hate every part of this
-    if (!fs.existsSync(this._clientOptions!.srcDirectory)) throw new Error("Could not run because `srcDirectory` doesn't exist."); 
-    if (!this._initialized || this._running) throw new Error(`Could not run because it was not initialized or was already running.`);
+    if (!fs.existsSync(this._clientOptions!.srcDirectory)) throw new Error("Could not start because `srcDirectory` doesn't exist."); 
+    if (!this._initialized || this._running) throw new Error(`Could not start because it was not initialized or had already started.`);
     return new Promise((resolve) => {
       this.post(["runningStarted", undefined]);
       this._running = true;

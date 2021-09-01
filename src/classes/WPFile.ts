@@ -1,4 +1,3 @@
-import { ApiOptionsParams } from "mwn/build/api_params";
 import type { WPFileChangeOptions, WPFileOptions } from "../types";
 
 /**
