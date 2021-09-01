@@ -12,11 +12,11 @@ import type { ClientOptions, Middleware } from "../types";
  */
 export class Client extends Evt<
 ["ready", undefined] | 
-["loginError", { error: any }] |
+["loginError", { error: unknown }] |
 ["runningStarted", undefined] | 
 ["runningEnded", undefined] |
-["editError", { file: WPFile, error: any}] |
-["createError", { file: WPFile, error: any}]
+["editError", { file: WPFile, error: unknown }] |
+["createError", { file: WPFile, error: unknown }]
 > {
   /**
    * Client options for the client, this can be changed later **when** the client is not running.
@@ -110,7 +110,7 @@ export class Client extends Evt<
    * @param commitComment - The default message to commit with, can be changed by the middlewares.
    */
   public run(commitComment: string): Promise<void> {
-    // i hate every part of this - Jullian 7/17/21
+    // Jullian(7/17/21): i hate every part of this
     if (!fs.existsSync(this._clientOptions!.srcDirectory)) throw new Error("Could not run because `srcDirectory` doesn't exist."); 
     if (!this._initialized || this._running) throw new Error(`Could not run because it was not initialized or was already running.`);
     return new Promise((resolve) => {

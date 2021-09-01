@@ -12,7 +12,7 @@ yargs(process.argv.slice(2))
 .command({
   command: "$0",
   describe: "The default command, sends basic package information.",
-  handler: () => console.log(`WikiPages (Node) by RumbleWikis\nHomepage: https://github.com/RumbleWikis/WikiPages\n\nUse "wikipages --help" for help.`)
+  handler: () => console.log(`WikiPages (NodeJS) by RumbleWikis\nHomepage: https://github.com/RumbleWikis/WikiPages\n\nUse "wikipages --help" for help.`)
 })
 .command({
   command: "run",
@@ -26,7 +26,7 @@ yargs(process.argv.slice(2))
 .command({
   command: "build [file]",
   describe: "TODO",
-  builder: (yargs: Argv) => yargs.default("project", "default.wiki.js").string("file"),
+  builder: (yargs: Argv) => yargs.default("project", "default.wiki.js").string("out").string("file"),
   handler: (argv) => {
     // TODO
   }
@@ -41,7 +41,5 @@ yargs(process.argv.slice(2))
 })
 .help(true)
 .strict(true)
-// Jullian 8/8/21: Is there a better way to do this than having it strict and show help on fail for
-// 404 commands.
 .showHelpOnFail(true)
 .parse()
