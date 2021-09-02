@@ -87,9 +87,9 @@ export interface Middleware {
    */
   type: MiddlewareType;
   /**
-   * The execute function of the middleware.
+   * The execute function, or promise, of the middleware.
    */
-  execute: (file: WPFile, settings?: Record<string, unknown>) => Promise<WPFile>
+  execute: (file: WPFile, settings?: Record<string, unknown>) => Promise<WPFile> | WPFile;
 }
 
 /**
@@ -147,7 +147,7 @@ export interface ClientOptions {
   /**
    * Middleware settings for middleware, see https://github.com/RumbleWikis/WikiPages#Middlewares for more info.
    */
-   middlewareSettings?: Record<string, Record<string, unknown>>;
+  middlewareSettings?: Record<string, Record<string, unknown>>;
   /**
    * The array of middlewares to add, see https://github.com/RumbleWikis/WikiPages#Middlewares for more info. More middleware can be added later with `client.addMiddlewares(...)`.
    */

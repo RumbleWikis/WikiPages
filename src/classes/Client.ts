@@ -144,7 +144,13 @@ export class Client extends Evt<
    */
   public addMiddlewares(...middleware: Middleware[]): void {
     if (this._running) throw new Error(`Could not run because it was already running.`);
-    (this._clientOptions!.middlewares ||= []).concat(middleware);
+    (this._clientOptions!.middlewares ||= []).concat(middleware.map(middleware => {
+      if (middleware.execute instanceof Promise) return middleware;
+      return {
+        ...middleware,
+        execute: promisify(middleware.execute)
+      }
+    }));
   }
 
   /**
@@ -235,7 +241,7 @@ export class Client extends Evt<
             await middleware.execute(file, middlewareSettings);
           } catch(error) {
             this.post(["middlewareError", { error }]);
-            file.errors.push(error);
+            file.errors.push(error as Error);
             file.change({
               shouldCommit: false
             });
@@ -248,7 +254,6 @@ export class Client extends Evt<
 
   /**
    * Run the bot, going through all middlewares, and then pushing the files with `shouldCommit` as true to the site. This can not be run while an instance is already active.
-   * @alias start
    * @param commitComment - The default message to commit with, can be changed by the middlewares.
    */
   public run(commitComment: string): Promise<void> {
