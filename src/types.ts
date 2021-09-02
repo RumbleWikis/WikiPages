@@ -89,7 +89,7 @@ export interface Middleware {
   /**
    * The execute function of the middleware.
    */
-  execute: (file: WPFile, settings?: Record<string, unknown>) => WPFile
+  execute: (file: WPFile, settings?: Record<string, unknown>) => Promise<WPFile>
 }
 
 /**
@@ -131,19 +131,23 @@ export interface ClientOptions {
    */
   cacheFile: string;
   /**
-   * Middleware settings for middleware, see https://github.com/RumbleWikis/WikiPages#Middlewares for more info.
-   */
-  middlewareSettings?: Record<string, Record<string, any>>;
-  /**
    * The maximum allowed of retries, will quit trying after the maximum allowed retries.
    */
   maxRetries?: number;
+  /**
+   * The timeout between performed edits. Default is 10s (10000ms).
+   */
+  editTimeout?: number;
   /**
    * Namespace mappings, an empty value for namespace will default to the main Namespace.
    * 
    * This can be used for non-english wikis or other uses.
    */
   namespaceMappings?: Record<string, string>
+  /**
+   * Middleware settings for middleware, see https://github.com/RumbleWikis/WikiPages#Middlewares for more info.
+   */
+   middlewareSettings?: Record<string, Record<string, unknown>>;
   /**
    * The array of middlewares to add, see https://github.com/RumbleWikis/WikiPages#Middlewares for more info. More middleware can be added later with `client.addMiddlewares(...)`.
    */

@@ -1,5 +1,6 @@
 import { mwn } from "mwn";
 import * as fs from "fs";
+import { promisify } from "util";
 import getAllFiles from "../utils/getAllFiles";
 import md5Hash from "../utils/md5Hash";
 import { Evt, to } from "evt";
@@ -16,7 +17,8 @@ export class Client extends Evt<
 ["runningStarted", undefined] | 
 ["runningEnded", undefined] |
 ["editError", { file: WPFile, error: unknown }] |
-["createError", { file: WPFile, error: unknown }]
+["createError", { file: WPFile, error: unknown }] |
+["middlewareError", { error: unknown }]
 > {
   /**
    * Creates a new WikiPages Client and logs in with a Promise
@@ -35,11 +37,14 @@ export class Client extends Evt<
    * ```
    * @param options - The client options.
    */
-  static init(options: ClientOptions): Promise<Client> {
+  static async init(options: ClientOptions): Promise<Client> {
     const client = new this(options);
-    return new Promise((resolve, reject) => {
-      client.login().then(() => resolve(client)).catch(error => reject(error));
-    });
+    try {
+      await client.login();
+      return client;
+    } catch (error) {
+      throw error;
+    }
   }
 
   /**
@@ -90,6 +95,14 @@ export class Client extends Evt<
     super()
     if (fs.existsSync(options.cacheFile) ? !fs.lstatSync(options.cacheFile).isDirectory() : true) {
       this._clientOptions = options;
+      if (this._clientOptions.middlewares) this._clientOptions.middlewares = this._clientOptions.middlewares.map(middleware => {
+        if (middleware.execute instanceof Promise) return middleware;
+        return {
+          ...middleware,
+          execute: promisify(middleware.execute)
+        }
+      });
+
       this._mwnClient = new mwn({
         apiUrl: options.credentials.apiUrl,
         maxRetries: options.maxRetries,
@@ -101,17 +114,15 @@ export class Client extends Evt<
     } else throw new Error(`"${options.cacheFile}" is not a valid dirrectory for "cacheFile"`)
   }
 
-  public login(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      this._mwnClient!.login().then(() => {
-        this._initialized = true;
-        this.post(["ready", undefined]);
-        resolve();
-      }).catch((error) => {
-        this.post(["loginError", { error }]);
-        reject(error);
-      });
-    });
+  public async login(): Promise<void> {
+    try {
+      await this._mwnClient!.login();
+      this.post(["ready", undefined]);
+      return;
+    } catch (error) {
+      this.post(["loginError", { error }]);
+      throw error;
+    }
   }
 
   /**
@@ -148,12 +159,12 @@ export class Client extends Evt<
     shortFileDirectory = shortFileDirectorySplit.join("/");
 
     // Jullian(9/2/21): not sure if this is bad, but only way to do it right now that I can think of.
-    const namespaceMappings = {
+    const namespaceMappings: Record<string, string> = {
       Main: "",
       ...this._clientOptions!.namespaceMappings
     };
     // Change namespace if it exists in clientOptions.namespaceMappings
-    namespace = this._clientOptions!.namespaceMappings?.[namespace] ?? namespace;
+    namespace = namespaceMappings[namespace] ?? namespace;
     // If empty, assume that it's Main
     namespace = namespace === "" ? "" : `${namespace}:`;
 
@@ -192,21 +203,45 @@ export class Client extends Evt<
    * Passes a file through all middlewares
    * @param file - The file to be passed though
    */
-  public buildFile(file: WPFile): Promise<WPFile> {
-    return new Promise((resolve, reject) => {
-      // TO-DO
-    });
+  public async buildFile(file: WPFile): Promise<WPFile> {
+    if (this._clientOptions?.middlewares) {
+      for (const middleware of this._clientOptions.middlewares.filter(middleware => middleware.type === "Page")) {
+        let shouldExecuteMiddleware: boolean = true;
+        if (shouldExecuteMiddleware && middleware.matchLongExtension) 
+          shouldExecuteMiddleware = file.originalLongExtension!.match(middleware.matchLongExtension) ? true : false;
+
+        if (shouldExecuteMiddleware && middleware.matchShortExtension) 
+          shouldExecuteMiddleware = file.originalLongExtension!.match(middleware.matchShortExtension) ? true : false;
+
+        if (shouldExecuteMiddleware && middleware.matchPath)
+          shouldExecuteMiddleware = file.originalLongExtension!.match(middleware.matchPath) ? true : false;
+        
+        if (shouldExecuteMiddleware) {
+          const middlewareSettings = middleware.settingsIndex ? this._clientOptions!.middlewareSettings?.[middleware.settingsIndex] : undefined;
+          try {
+            await middleware.execute(file, middlewareSettings);
+          } catch(error) {
+            this.post(["middlewareError", { error }]);
+            file.change({
+              shouldCommit: false
+            });
+          }
+        }
+      }
+    }
+    return file;
   }
 
   /**
    * Run the bot, going through all middlewares, and then pushing the files with `shouldCommit` as true to the site. This can not be run while an instance is already active.
+   * @alias start
    * @param commitComment - The default message to commit with, can be changed by the middlewares.
    */
   public run(commitComment: string): Promise<void> {
     // Jullian(7/17/21): i hate every part of this
     if (!fs.existsSync(this._clientOptions!.srcDirectory)) throw new Error("Could not start because `srcDirectory` doesn't exist."); 
     if (!this._initialized || this._running) throw new Error(`Could not start because it was not initialized or had already started.`);
-    return new Promise((resolve) => {
+    return new Promise(async(resolve) => {
       this.post(["runningStarted", undefined]);
       this._running = true;
       const md5Hashes: Map<string, string> = new Map<string, string>();
@@ -222,7 +257,7 @@ export class Client extends Evt<
       const pagesToEdit = new Map<string, WPFile>();
       const files = getAllFiles(this._clientOptions!.srcDirectory);
 
-      files.forEach(file => {
+      for (const file of files) {
         const content = fs.readFileSync(file);
         const { path, originalShortExtension, originalLongExtension} = this.parseFileName(file);
         const wpFile = new WPFile({
@@ -234,26 +269,9 @@ export class Client extends Evt<
           shouldCommit: true,
           path: path
         });
-
-        if (this._clientOptions!.middlewares)
-          this._clientOptions!.middlewares.filter(middleware => middleware.type === "Page").forEach(middleware => {
-            let shouldExecuteMiddleware: boolean = true;
-            if (shouldExecuteMiddleware && middleware.matchLongExtension) 
-              shouldExecuteMiddleware = originalLongExtension.match(middleware.matchLongExtension) ? true : false;
-
-            if (shouldExecuteMiddleware && middleware.matchShortExtension) 
-              shouldExecuteMiddleware = originalLongExtension.match(middleware.matchShortExtension) ? true : false;
-
-            if (shouldExecuteMiddleware && middleware.matchPath)
-               shouldExecuteMiddleware = originalLongExtension.match(middleware.matchPath) ? true : false;
-            
-            if (shouldExecuteMiddleware) {
-              const middlewareSettings = middleware.settingsIndex ? this._clientOptions!.middlewareSettings?.[middleware.settingsIndex] : undefined;
-              middleware.execute(wpFile, middlewareSettings);
-            }
-          });
+        await this.buildFile(wpFile);
         if (wpFile.shouldCommit) pagesToEdit.set(wpFile.path!, wpFile);
-      });
+      }
 
       const allEdits: Promise<unknown>[] = [];
       pagesToEdit.forEach((file) => {
@@ -278,20 +296,19 @@ export class Client extends Evt<
                   });
                 } else this.post(["editError", { file, error }])
               });
-            }, (allEdits.length + 1) * 10000)
+            }, (allEdits.length + 1) * (this._clientOptions!.editTimeout ?? 10000));
           }));
         });
-        Promise.all(allEdits).then(() => {
-          const newMd5HashesJSON: Record<string, string> = {};
-          newMd5Hashes.forEach((value, key) => {
-            newMd5HashesJSON[key] = value;
-          });
-    
-          fs.writeFileSync(this._clientOptions!.cacheFile, JSON.stringify(newMd5HashesJSON));
-          this._running = false;
-          this.post(["runningEnded", undefined]);
-          resolve(); 
+        await Promise.all(allEdits);
+        const newMd5HashesJSON: Record<string, string> = {};
+        newMd5Hashes.forEach((value, key) => {
+          newMd5HashesJSON[key] = value;
         });
+    
+        fs.writeFileSync(this._clientOptions!.cacheFile, JSON.stringify(newMd5HashesJSON));
+        this._running = false;
+        this.post(["runningEnded", undefined]);
+        resolve(); 
     })
   }
 }
