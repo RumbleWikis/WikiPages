@@ -3,8 +3,7 @@ import yargs from "yargs/yargs";
 import * as process from "process";
 import type { Argv } from "yargs";
 
-// TODO: ["run", "start"] ["build"] ["test"]
-// Need to improve basic library before CLI
+// TODO: [Need to improve core library before CLI
 yargs(process.argv.slice(2))
 .scriptName("wikipages")
 .version()

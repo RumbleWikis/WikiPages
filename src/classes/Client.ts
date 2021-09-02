@@ -5,7 +5,7 @@ import md5Hash from "../utils/md5Hash";
 import { Evt, to } from "evt";
 import { basename, dirname, extname } from "path";
 import { WPFile } from "./WPFile";
-import type { ClientOptions, Middleware } from "../types";
+import type { ClientOptions, Middleware, ParsedFileNameInformation } from "../types";
 
 /**
  * The WikiPages Client.
@@ -91,11 +91,11 @@ export class Client extends Evt<
     if (fs.existsSync(options.cacheFile) ? !fs.lstatSync(options.cacheFile).isDirectory() : true) {
       this._clientOptions = options;
       this._mwnClient = new mwn({
-        apiUrl: options.apiUrl,
+        apiUrl: options.credentials.apiUrl,
         maxRetries: options.maxRetries,
-        username: options.username,
-        password: options.password,
-        userAgent: `${options.userAgent ?? "Instance"} (powered by @rumblewikis/wikipages)`,
+        username: options.credentials.username,
+        password: options.credentials.password,
+        userAgent: `${options.credentials.userAgent ?? "Instance"} (powered by @rumblewikis/wikipages)`,
         silent: true
       });
     } else throw new Error(`"${options.cacheFile}" is not a valid dirrectory for "cacheFile"`)
@@ -139,12 +139,58 @@ export class Client extends Evt<
    * Parses a file name from a file system directory to MediaWiki directory
    * @param fileName - The name of the file from the File System.
    */
-  public parseFileName(fileName: string): string {
-    // TO-DO
+  public parseFileName(file: string): ParsedFileNameInformation {
+    // Trim off srcDirectory
+    let shortFileDirectory: string = file.slice(this._clientOptions!.srcDirectory.length + 1);
+    const shortFileDirectorySplit = shortFileDirectory.split("/");
+    // Grab namespace and join the rest of the filename
+    let namespace: string = shortFileDirectorySplit.shift()!;
+    shortFileDirectory = shortFileDirectorySplit.join("/");
+
+    // Jullian(9/2/21): not sure if this is bad, but only way to do it right now that I can think of.
+    const namespaceMappings = {
+      Main: "",
+      ...this._clientOptions!.namespaceMappings
+    };
+    // Change namespace if it exists in clientOptions.namespaceMappings
+    namespace = this._clientOptions!.namespaceMappings?.[namespace] ?? namespace;
+    // If empty, assume that it's Main
+    namespace = namespace === "" ? "" : `${namespace}:`;
+
+    let folderDirectory: string = dirname(shortFileDirectory);
+    let folder: string = basename(folderDirectory);
+
+    let fileName: string = basename(shortFileDirectory);
+    // Grab long extension & short extension. short: .js long: .test.js
+    const originalLongExtension = ((fileName.match(/\.(.*)/) || [])[0]) || "";
+    const originalShortExtension = extname(fileName);
+    // Remove long extension (this of course leaves no .*)
+    fileName = basename(fileName, originalLongExtension);
+
+    // ex: Bruh/Bruh.lua -> Bruh
+    if (fileName === folder) {
+      folderDirectory = dirname(folderDirectory);
+      folder = basename(folderDirectory);
+    }
+
+    // Add namespace, folder, and file name
+    let newPath: string = `${namespace}${folderDirectory === "." ? "" : `${folderDirectory}/`}${fileName}`;
+    
+    // Change bruh.doc.wikitext to bruh/doc
+    if (originalLongExtension === ".doc.wikitext") newPath = `${newPath}/doc`;
+    if (originalShortExtension === ".css" || originalShortExtension === ".js") 
+      newPath = `${newPath}${originalShortExtension}`;
+
+    return {
+      path: newPath,
+      originalLongExtension,
+      originalShortExtension
+    }
   }
 
   /**
    * Passes a file through all middlewares
+   * @param file - The file to be passed though
    */
   public buildFile(file: WPFile): Promise<WPFile> {
     return new Promise((resolve, reject) => {
@@ -178,61 +224,45 @@ export class Client extends Evt<
 
       files.forEach(file => {
         const content = fs.readFileSync(file);
-        let shortFileDirectory: string = file.slice(this._clientOptions!.srcDirectory.length + 1);
-        const shortFileDirectorySplit = shortFileDirectory.split("/");
-        // @ts-ignore: This will never be undefined
-        let namespace: string = shortFileDirectorySplit.shift();
-        shortFileDirectory = shortFileDirectorySplit.join("/");
-
-        namespace = ((namespace === this._clientOptions!.mainNamespace) ? "" : `${namespace}:`);
-
-        let folderDirectory: string = dirname(shortFileDirectory);
-        let folder: string = basename(folderDirectory);
-
-        let fileName: string = basename(shortFileDirectory);
-        const longExtension = ((fileName.match(/\.(.*)/) || [])[0]) || "";
-        const shortExtension = extname(fileName);
-        fileName = basename(fileName, longExtension);
-
-        // ex: Bruh/Bruh.lua -> Bruh
-        if (fileName === folder) {
-          folderDirectory = dirname(folderDirectory);
-          folder = basename(folderDirectory);
-        }
-
+        const { path, originalShortExtension, originalLongExtension} = this.parseFileName(file);
         const wpFile = new WPFile({
           commitComment,
-          originalLongExtension: longExtension,
-          originalShortExtension: shortExtension,
+          originalLongExtension,
+          originalShortExtension,
           originalPath: file,
           source: content.toString(),
           shouldCommit: true,
-          path:`${namespace}${folderDirectory === "." ? "" : `${folderDirectory}/`}${fileName}`
+          path: path
         });
 
-        // Change bruh.doc.wikitext to bruh/doc
-        if (wpFile.originalLongExtension === ".doc.wikitext") wpFile.path = `${wpFile.path}/doc`;
-        if (wpFile.originalShortExtension === ".css" || wpFile.originalShortExtension === ".js") wpFile.path = `${wpFile.path}${wpFile.originalShortExtension}`;
-
         if (this._clientOptions!.middlewares)
-          for (const middleware of this._clientOptions!.middlewares) {
-            if ((middleware.matchLongExtension ? longExtension.match(middleware.matchLongExtension) : true) 
-              && (middleware.matchShortExtension ? shortExtension.match(middleware.matchShortExtension) : true) 
-              && (middleware.matchPath ? wpFile.path!.match(middleware.matchPath) : true)) 
-                middleware.execute(wpFile, middleware.settingsIndex ? this._clientOptions!.middlewareSettings?.[middleware.settingsIndex] : undefined);
-          }
-        
+          this._clientOptions!.middlewares.filter(middleware => middleware.type === "Page").forEach(middleware => {
+            let shouldExecuteMiddleware: boolean = true;
+            if (shouldExecuteMiddleware && middleware.matchLongExtension) 
+              shouldExecuteMiddleware = originalLongExtension.match(middleware.matchLongExtension) ? true : false;
+
+            if (shouldExecuteMiddleware && middleware.matchShortExtension) 
+              shouldExecuteMiddleware = originalLongExtension.match(middleware.matchShortExtension) ? true : false;
+
+            if (shouldExecuteMiddleware && middleware.matchPath)
+               shouldExecuteMiddleware = originalLongExtension.match(middleware.matchPath) ? true : false;
+            
+            if (shouldExecuteMiddleware) {
+              const middlewareSettings = middleware.settingsIndex ? this._clientOptions!.middlewareSettings?.[middleware.settingsIndex] : undefined;
+              middleware.execute(wpFile, middlewareSettings);
+            }
+          });
         if (wpFile.shouldCommit) pagesToEdit.set(wpFile.path!, wpFile);
       });
 
       const allEdits: Promise<unknown>[] = [];
       pagesToEdit.forEach((file) => {
-        if (!(md5Hashes.get(file.path!) && (md5Hash(file.source!.trimEnd()) === md5Hashes.get(file.path!))))
+        if (!(md5Hashes.get(file.path!) && (md5Hash(file.source!) === md5Hashes.get(file.path!))))
           allEdits.push(new Promise((resolve) => {
             setTimeout(() => {
               this._mwnClient!.edit(file.path!, (revision) => {
-                if (!(md5Hashes.get(file.path!) && md5Hash(revision.content.trimEnd()) === md5Hash(file.source!.trimEnd()))) {
-                  newMd5Hashes.set(file.path!, md5Hash(file.source!.trimEnd()));
+                if (!(md5Hashes.get(file.path!) && md5Hash(revision.content) === md5Hash(file.source!.trimEnd()))) {
+                  newMd5Hashes.set(file.path!, md5Hash(file.source!));
                   return {
                     summary: file.commitComment,
                     text: file.source
