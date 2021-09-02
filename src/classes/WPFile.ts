@@ -33,6 +33,10 @@ export class WPFile {
    */
   public source?: string;
   /**
+   * An array of the errors given from middlewares.
+   */
+  public errors: Error[] = [];
+  /**
    * Create a new WPFile.
    */
   constructor(options: WPFileOptions) {

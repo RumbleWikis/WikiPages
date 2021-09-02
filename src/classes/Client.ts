@@ -1,5 +1,6 @@
 import { mwn } from "mwn";
 import * as fs from "fs";
+import { is } from 'typescript-is';
 import { promisify } from "util";
 import getAllFiles from "../utils/getAllFiles";
 import md5Hash from "../utils/md5Hash";
@@ -27,7 +28,7 @@ export class Client extends Evt<
    *   username: "Username",
    *   password: "Password",
    *   srcDirectory: "src/",
-   *   cacheFile: "cache.json",
+   *   cacheFilePath: "cache.json",
    *   apiUrl: "https://en.wikipedia.org/api.php",
    * }).then((client) => {
    *   ...
@@ -45,6 +46,18 @@ export class Client extends Evt<
     } catch (error) {
       throw error;
     }
+  }
+
+  /**
+   * Init a new Client from a given path
+   * @param filePath - The path to the .wiki.js or similar
+   */
+  static initFromFile(filePath: string): Promise<Client> {
+    const fileReturn = require(filePath);
+    if (!fileReturn) throw new Error(`"${filePath}" must return an object.`);
+    if (!is<ClientOptions>(fileReturn)) throw new TypeError(`Options does not follow the required schema for ClientOptions, please see the documentation.`);
+
+    return this.init(fileReturn);
   }
 
   /**
@@ -85,7 +98,7 @@ export class Client extends Evt<
    *   username: "Username",
    *   password: "Password",
    *   srcDirectory: "src/",
-   *   cacheFile: "cache.json",
+   *   cacheFilePath: "cache.json",
    *   apiUrl: "https://en.wikipedia.org/api.php",
    * })
    * ```
@@ -93,7 +106,7 @@ export class Client extends Evt<
    */
   constructor(options: ClientOptions) {
     super()
-    if (fs.existsSync(options.cacheFile) ? !fs.lstatSync(options.cacheFile).isDirectory() : true) {
+    if (fs.existsSync(options.cacheFilePath) ? !fs.lstatSync(options.cacheFilePath).isDirectory() : true) {
       this._clientOptions = options;
       if (this._clientOptions.middlewares) this._clientOptions.middlewares = this._clientOptions.middlewares.map(middleware => {
         if (middleware.execute instanceof Promise) return middleware;
@@ -111,7 +124,7 @@ export class Client extends Evt<
         userAgent: `${options.credentials.userAgent ?? "Instance"} (powered by @rumblewikis/wikipages)`,
         silent: true
       });
-    } else throw new Error(`"${options.cacheFile}" is not a valid dirrectory for "cacheFile"`)
+    } else throw new Error(`"${options.cacheFilePath}" is not a valid dirrectory for "cacheFilePath"`)
   }
 
   public async login(): Promise<void> {
@@ -222,6 +235,7 @@ export class Client extends Evt<
             await middleware.execute(file, middlewareSettings);
           } catch(error) {
             this.post(["middlewareError", { error }]);
+            file.errors.push(error);
             file.change({
               shouldCommit: false
             });
@@ -247,7 +261,7 @@ export class Client extends Evt<
       const md5Hashes: Map<string, string> = new Map<string, string>();
       const newMd5Hashes: Map<string, string> = new Map<string, string>();
       try { 
-        const hashJSON = JSON.parse(fs.readFileSync(this._clientOptions!.cacheFile).toString());
+        const hashJSON = JSON.parse(fs.readFileSync(this._clientOptions!.cacheFilePath).toString());
         // we can assume it didn't error, so continue
         for (const [file, hash] of Object.entries<string>(hashJSON))
           md5Hashes.set(file, hash);
@@ -305,7 +319,7 @@ export class Client extends Evt<
           newMd5HashesJSON[key] = value;
         });
     
-        fs.writeFileSync(this._clientOptions!.cacheFile, JSON.stringify(newMd5HashesJSON));
+        fs.writeFileSync(this._clientOptions!.cacheFilePath, JSON.stringify(newMd5HashesJSON));
         this._running = false;
         this.post(["runningEnded", undefined]);
         resolve(); 

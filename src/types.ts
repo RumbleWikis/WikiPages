@@ -129,7 +129,7 @@ export interface ClientOptions {
   /**
    * The path to the file to place and search for file MD5 cache in.
    */
-  cacheFile: string;
+  cacheFilePath: string;
   /**
    * The maximum allowed of retries, will quit trying after the maximum allowed retries.
    */
