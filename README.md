@@ -19,6 +19,7 @@
 # Dependencies
 * [mwn](https://www.npmjs.com/package/mwn)
 * [Evt](https://www.npmjs.com/package/evt)
+* [yargs](https://www.npmjs.com/package/yargs)
 
 # Middlewares
 A list of approved middleware can be found [here](https://github.com/RumbleWikis/WikiPages-Middleware)
