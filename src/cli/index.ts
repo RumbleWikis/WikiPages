@@ -3,6 +3,7 @@ import yargs from "yargs/yargs";
 import { Client, to, WPFile } from "../index";
 import * as process from "process";
 import * as fs from "fs";
+import { resolve as resolvePath } from "path";
 import getAllFiles from "../utils/getAllFiles";
 import { Argv } from "yargs";
 
@@ -58,7 +59,7 @@ const argv = yargs(process.argv.slice(2))
     try {
       const client = await Client.initFromFile(argv.project);
       try {
-        const filePath = `${client.clientOptions!.path.srcDirectory}/${argv.file}`;
+        const filePath = resolvePath(`${client.clientOptions!.path.srcDirectory}/${argv.file}`);
         const file = fs.readFileSync(filePath);
         const parsedFileInformation = client.parseFileName(filePath);
         const wpFile = new WPFile({
@@ -69,7 +70,7 @@ const argv = yargs(process.argv.slice(2))
           source: file.toString()
         });
 
-        client.buildFile(wpFile);
+        await client.buildFile(wpFile);
 
         if ((argv.silent === "false") && wpFile.errors.length)
           wpFile.errors.forEach(console.log); 

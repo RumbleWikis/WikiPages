@@ -1,10 +1,9 @@
 import { mwn } from "mwn";
 import * as fs from "fs";
-import { promisify } from "util";
 import getAllFiles from "../utils/getAllFiles";
 import md5Hash from "../utils/md5Hash";
 import { Evt, to } from "evt";
-import { basename, dirname, extname, resolve } from "path";
+import { basename, dirname, extname, resolve as resolvePath } from "path";
 import { WPFile } from "./WPFile";
 import type { ClientOptions, Middleware, ParsedFileNameInformation } from "../types";
 
@@ -52,7 +51,7 @@ export class Client extends Evt<
    * @param filePath - The path to the .wiki.js or similar
    */
   static initFromFile(filePath: string): Promise<Client> {
-    const fileReturn = require(resolve(process.cwd(), filePath));
+    const fileReturn = require(resolvePath(process.cwd(), filePath));
     if (!fileReturn) throw new Error(`"${filePath}" must return an object.`);
 
     return this.init(fileReturn);
@@ -104,15 +103,10 @@ export class Client extends Evt<
    */
   constructor(options: ClientOptions) {
     super()
-    if (fs.existsSync(options.path.cacheFile) ? !fs.lstatSync(options.path.cacheFile).isDirectory() : true) {
+    if (fs.existsSync(resolvePath(process.cwd(), options.path.cacheFile)) ? !fs.lstatSync(resolvePath(process.cwd(), options.path.cacheFile)).isDirectory() : true) {
       this._clientOptions = options;
-      if (this._clientOptions.middlewares) this._clientOptions.middlewares = this._clientOptions.middlewares.map(middleware => {
-        if (middleware.execute instanceof Promise) return middleware;
-        return {
-          ...middleware,
-          execute: promisify(middleware.execute)
-        }
-      });
+      this._clientOptions.path.srcDirectory = resolvePath(process.cwd(), this._clientOptions.path.srcDirectory);
+      this._clientOptions.path.cacheFile = resolvePath(process.cwd(), this._clientOptions.path.cacheFile);
 
       this._mwnClient = new mwn({
         apiUrl: options.credentials.apiUrl,
@@ -142,13 +136,7 @@ export class Client extends Evt<
    */
   public addMiddlewares(...middleware: Middleware[]): void {
     if (this._running) throw new Error(`Could not run because it was already running.`);
-    (this._clientOptions!.middlewares ||= []).concat(middleware.map(middleware => {
-      if (middleware.execute instanceof Promise) return middleware;
-      return {
-        ...middleware,
-        execute: promisify(middleware.execute)
-      }
-    }));
+    (this._clientOptions!.middlewares ||= []).concat(middleware);
   }
 
   /**
@@ -222,7 +210,8 @@ export class Client extends Evt<
    */
   public async buildFile(file: WPFile): Promise<WPFile> {
     if (this._clientOptions?.middlewares) {
-      for (const middleware of this._clientOptions.middlewares.filter(middleware => middleware.type === "Page")) {
+      const middlewares = this._clientOptions.middlewares.filter(middleware => middleware.type === "Page");
+      for (const middleware of middlewares) {
         let shouldExecuteMiddleware: boolean = true;
         if (shouldExecuteMiddleware && middleware.matchLongExtension) 
           shouldExecuteMiddleware = file.originalLongExtension!.match(middleware.matchLongExtension) ? true : false;
@@ -256,7 +245,7 @@ export class Client extends Evt<
    */
   public run(commitComment: string): Promise<void> {
     // Jullian(7/17/21): i hate every part of this
-    if (!fs.existsSync(this._clientOptions!.path.srcDirectory)) throw new Error("Could not start because `srcDirectory` doesn't exist."); 
+    if (!fs.existsSync(resolvePath(process.cwd(), this._clientOptions!.path.srcDirectory))) throw new Error("Could not start because `srcDirectory` doesn't exist."); 
     if (!this._initialized || this._running) throw new Error(`Could not start because it was not initialized or had already started.`);
     return new Promise(async(resolve) => {
       this.post(["runningStarted", undefined]);
@@ -264,7 +253,7 @@ export class Client extends Evt<
       const md5Hashes: Map<string, string> = new Map<string, string>();
       const newMd5Hashes: Map<string, string> = new Map<string, string>();
       try { 
-        const hashJSON = JSON.parse(fs.readFileSync(this._clientOptions!.path.cacheFile).toString());
+        const hashJSON = JSON.parse(fs.readFileSync(resolvePath(process.cwd(), this._clientOptions!.path.cacheFile)).toString());
         // we can assume it didn't error, so continue
         for (const [file, hash] of Object.entries<string>(hashJSON))
           md5Hashes.set(file, hash);
@@ -272,7 +261,7 @@ export class Client extends Evt<
 
 
       const pagesToEdit = new Map<string, WPFile>();
-      const files = getAllFiles(this._clientOptions!.path.srcDirectory);
+      const files = getAllFiles(resolvePath(process.cwd(), this._clientOptions!.path.srcDirectory));
 
       for (const file of files) {
         const content = fs.readFileSync(file);
