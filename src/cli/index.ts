@@ -78,7 +78,7 @@ const argv = yargs(process.argv.slice(2))
         if (wpFile.shouldCommit) { 
           if (argv.out) { 
             try {
-              fs.writeFileSync(argv.out, wpFile.source!);
+              fs.writeFileSync(resolvePath(process.cwd(), argv.out), wpFile.source!);
               console.log(`Wrote to ${argv.out}`);
             } catch {
               if (argv.silent === "false") console.error(`Could not write to "${argv.out}", is it a valid file path?`);
