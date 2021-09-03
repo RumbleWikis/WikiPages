@@ -3,6 +3,7 @@ import yargs from "yargs/yargs";
 import { Client, to, WPFile } from "../index";
 import * as process from "process";
 import * as fs from "fs";
+import getAllFiles from "../utils/getAllFiles";
 import { Argv } from "yargs";
 
 const argv = yargs(process.argv.slice(2))
@@ -57,13 +58,14 @@ const argv = yargs(process.argv.slice(2))
     try {
       const client = await Client.initFromFile(argv.project);
       try {
-        const filePath = `${client.clientOptions!.path.srcDirectory ?? ""}/${argv.file}`;
+        const filePath = `${client.clientOptions!.path.srcDirectory}/${argv.file}`;
         const file = fs.readFileSync(filePath);
-        const parsedFileInformation = client.parseFileName(argv.file);
+        const parsedFileInformation = client.parseFileName(filePath);
         const wpFile = new WPFile({
           originalShortExtension: parsedFileInformation.originalShortExtension,
           originalLongExtension: parsedFileInformation.originalLongExtension,
           originalPath: filePath,
+          path: parsedFileInformation.path,
           source: file.toString()
         });
 
@@ -100,12 +102,52 @@ const argv = yargs(process.argv.slice(2))
   builder: (yargs: Argv) => yargs
     .default("project", "default.wiki.js")
     .string("file")
-    .default("silent", true)
+    .string("silent")
     .describe("project", "The path to the project (.wiki.js) file")
     .describe("file", "The file to be checked")
     .describe("silent", "Whether or not it shouldn't log errors"),
   handler: async (argv) => {
-
+    try {
+      const client = await Client.initFromFile(argv.project);
+      try {
+        const filesPromise: Promise<void>[] = [];
+        const files = argv.file ? [`${client.clientOptions!.path.srcDirectory}/${argv.file}`] : getAllFiles(client.clientOptions!.path.srcDirectory);
+        files.forEach(file => {
+          filesPromise.push((async () => {
+            try {
+              const fileContent = fs.readFileSync(file);
+              const parsedFileInformation = client.parseFileName(file);
+              const wpFile = new WPFile({
+                originalShortExtension: parsedFileInformation.originalShortExtension,
+                originalLongExtension: parsedFileInformation.originalLongExtension,
+                originalPath: file,
+                path: parsedFileInformation.path,
+                source: fileContent.toString()
+              });
+              try {
+                await client.buildFile(wpFile);
+                console.log(`File ${file} had ${wpFile.errors.length} errors`);
+                if (wpFile.errors.length && !argv.silent) wpFile.errors.forEach(error => console.error(error));
+              } catch {
+                if (argv.silent) console.error(`An error occurred while building "${file}"`);
+              }
+            } catch {
+              if (!argv.silent) console.error(`"${file}" is not a valid file.`);
+            }
+            return;
+          })()); 
+        });
+        await Promise.all(filesPromise);
+        console.log(`Finished checking ${files.length} files`);
+        process.exit(0);
+      } catch (error) {
+        if (!argv.silent) console.error(error.message);
+        process.exit(0);
+      }
+    } catch (error) {
+      if (!argv.silent) console.error(error.message);
+      process.exit(0);
+    }
   }
 })
 .help(true)
