@@ -19,7 +19,7 @@ export class Client extends Evt<
 ["runningEnded", undefined] |
 ["editError", { file: WPFile, error: unknown }] |
 ["createError", { file: WPFile, error: unknown }] |
-["middlewareError", { error: unknown }]
+["middlewareError", { file: WPFile, error: unknown }]
 > {
   /**
    * Creates a new WikiPages Client and logs in with a Promise
@@ -106,7 +106,7 @@ export class Client extends Evt<
    */
   constructor(options: ClientOptions) {
     super()
-    if (fs.existsSync(options.cacheFilePath) ? !fs.lstatSync(options.cacheFilePath).isDirectory() : true) {
+    if (fs.existsSync(options.path.cacheFile) ? !fs.lstatSync(options.path.cacheFile).isDirectory() : true) {
       this._clientOptions = options;
       if (this._clientOptions.middlewares) this._clientOptions.middlewares = this._clientOptions.middlewares.map(middleware => {
         if (middleware.execute instanceof Promise) return middleware;
@@ -118,13 +118,13 @@ export class Client extends Evt<
 
       this._mwnClient = new mwn({
         apiUrl: options.credentials.apiUrl,
-        maxRetries: options.maxRetries,
+        maxRetries: options.api?.maxRetries,
         username: options.credentials.username,
         password: options.credentials.password,
         userAgent: `${options.credentials.userAgent ?? "Instance"} (powered by @rumblewikis/wikipages)`,
         silent: true
       });
-    } else throw new Error(`"${options.cacheFilePath}" is not a valid dirrectory for "cacheFilePath"`)
+    } else throw new Error(`"${options.path.cacheFile}" is not a valid dirrectory for "cacheFilePath"`)
   }
 
   public async login(): Promise<void> {
@@ -171,7 +171,7 @@ export class Client extends Evt<
    */
   public parseFileName(file: string): ParsedFileNameInformation {
     // Trim off srcDirectory
-    let shortFileDirectory: string = file.slice(this._clientOptions!.srcDirectory.length + 1);
+    let shortFileDirectory: string = file.slice(this._clientOptions!.path.srcDirectory.length + 1);
     const shortFileDirectorySplit = shortFileDirectory.split("/");
     // Grab namespace and join the rest of the filename
     let namespace: string = shortFileDirectorySplit.shift()!;
@@ -180,7 +180,7 @@ export class Client extends Evt<
     // Jullian(9/2/21): not sure if this is bad, but only way to do it right now that I can think of.
     const namespaceMappings: Record<string, string> = {
       Main: "",
-      ...this._clientOptions!.namespaceMappings
+      ...this._clientOptions!.path.namespaceMappings
     };
     // Change namespace if it exists in clientOptions.namespaceMappings
     namespace = namespaceMappings[namespace] ?? namespace;
@@ -240,7 +240,7 @@ export class Client extends Evt<
           try {
             await middleware.execute(file, middlewareSettings);
           } catch(error) {
-            this.post(["middlewareError", { error }]);
+            this.post(["middlewareError", { file, error }]);
             file.errors.push(error as Error);
             file.change({
               shouldCommit: false
@@ -258,7 +258,7 @@ export class Client extends Evt<
    */
   public run(commitComment: string): Promise<void> {
     // Jullian(7/17/21): i hate every part of this
-    if (!fs.existsSync(this._clientOptions!.srcDirectory)) throw new Error("Could not start because `srcDirectory` doesn't exist."); 
+    if (!fs.existsSync(this._clientOptions!.path.srcDirectory)) throw new Error("Could not start because `srcDirectory` doesn't exist."); 
     if (!this._initialized || this._running) throw new Error(`Could not start because it was not initialized or had already started.`);
     return new Promise(async(resolve) => {
       this.post(["runningStarted", undefined]);
@@ -266,7 +266,7 @@ export class Client extends Evt<
       const md5Hashes: Map<string, string> = new Map<string, string>();
       const newMd5Hashes: Map<string, string> = new Map<string, string>();
       try { 
-        const hashJSON = JSON.parse(fs.readFileSync(this._clientOptions!.cacheFilePath).toString());
+        const hashJSON = JSON.parse(fs.readFileSync(this._clientOptions!.path.cacheFile).toString());
         // we can assume it didn't error, so continue
         for (const [file, hash] of Object.entries<string>(hashJSON))
           md5Hashes.set(file, hash);
@@ -274,7 +274,7 @@ export class Client extends Evt<
 
 
       const pagesToEdit = new Map<string, WPFile>();
-      const files = getAllFiles(this._clientOptions!.srcDirectory);
+      const files = getAllFiles(this._clientOptions!.path.srcDirectory);
 
       for (const file of files) {
         const content = fs.readFileSync(file);
@@ -315,7 +315,7 @@ export class Client extends Evt<
                   });
                 } else this.post(["editError", { file, error }])
               });
-            }, (allEdits.length + 1) * (this._clientOptions!.editTimeout ?? 10000));
+            }, (allEdits.length + 1) * (this._clientOptions!.api?.editTimeout ?? 10000));
           }));
         });
         await Promise.all(allEdits);
@@ -324,7 +324,7 @@ export class Client extends Evt<
           newMd5HashesJSON[key] = value;
         });
     
-        fs.writeFileSync(this._clientOptions!.cacheFilePath, JSON.stringify(newMd5HashesJSON));
+        fs.writeFileSync(this._clientOptions!.path.cacheFile, JSON.stringify(newMd5HashesJSON));
         this._running = false;
         this.post(["runningEnded", undefined]);
         resolve(); 

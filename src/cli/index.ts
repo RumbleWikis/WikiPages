@@ -18,30 +18,44 @@ const argv = yargs(process.argv.slice(2))
   command: "run",
   aliases: ["start"],
   describe: "Gets all files in the specified srcDirectory and pushes them to the Wiki",
-  builder: (yargs: Argv) => yargs.default("project", "default.wiki.js").default("comment", "Commit via WikiPages CLI").describe("project", "The path to the project (.wiki.js) file").describe("comment", "The default commit (or edit) summary"),
+  builder: (yargs: Argv) => yargs.default("project", "default.wiki.js")
+    .default("comment", "Commit via WikiPages CLI")
+    .default("silent", true)
+    .describe("project", "The path to the project (.wiki.js) file")
+    .describe("comment", "The default commit (or edit) summary")
+    .describe("silent", "Whether or not it shouldn't log errors"),
   handler: async (argv) => {
     try {
       const client = await Client.initFromFile(argv.project);
-      client.$attach(to("middlewareError"), (error) => console.log(`middlewareError: ${error.error}`));
-      client.$attach(to("editError"), (error) => console.log(`editError: ${error.error}`));
-      client.$attach(to("createError"), (error) => console.log(`editError: ${error.error}`));
+      if (!argv.silent) client.$attach(to("middlewareError"), (error) => console.log(`middlewareError: ${error.error}`));
+      if (!argv.silent) client.$attach(to("editError"), (error) => console.log(`editError: ${error.error}`));
+      if (!argv.silent) client.$attach(to("createError"), (error) => console.log(`editError: ${error.error}`));
       await client.run(argv.comment);
-      console.log(`All finished pushing to wiki`);
+      console.log(`Finished pushing to ${client.clientOptions!.credentials.apiUrl}`);
       process.exit(0);
     } catch (error) {
-      console.error((error as TypeError).message);
+      if (!argv.silent) console.error((error as TypeError).message);
+      process.exit(0);
     }
   }
 })
 .command({
   command: "build [file]",
   describe: "Gets the file and runs it through all middlewares, logs the errors, and will write to file if out is specified",
-  builder: (yargs: Argv) => yargs.default("project", "default.wiki.js").string("out").string("file").demandOption("file").describe("project", "The path to the project (.wiki.js) file").describe("out", "The path to the file to be written in the current directory").describe("file", "The path to the file in the srcDirectory"),
+  builder: (yargs: Argv) => yargs.default("project", "default.wiki.js")
+    .default("silent", true)
+    .string("out")
+    .string("file")
+    .demandOption("file")
+    .describe("project", "The path to the project (.wiki.js) file")
+    .describe("out", "The path to the file to be written in the current directory")
+    .describe("file", "The path to the file in the srcDirectory")
+    .describe("silent", "Whether or not it shouldn't log errors"),
   handler: async (argv) => {
     try {
       const client = await Client.initFromFile(argv.project);
       try {
-        const filePath = `${client.clientOptions!.srcDirectory ?? ""}/${argv.file}`;
+        const filePath = `${client.clientOptions!.path.srcDirectory ?? ""}/${argv.file}`;
         const file = fs.readFileSync(filePath);
         const parsedFileInformation = client.parseFileName(argv.file);
         const wpFile = new WPFile({
@@ -53,7 +67,7 @@ const argv = yargs(process.argv.slice(2))
 
         client.buildFile(wpFile);
 
-        if (wpFile.errors.length)
+        if (!argv.silent && wpFile.errors.length)
           wpFile.errors.forEach(console.log); 
         
         if (wpFile.shouldCommit) { 
@@ -62,17 +76,17 @@ const argv = yargs(process.argv.slice(2))
               fs.writeFileSync(argv.out, wpFile.source!);
               console.log(`Wrote to ${argv.out}`);
             } catch {
-              console.error(`Could not write to "${argv.out}", is it a valid file path?`);
+              if (!argv.silent) console.error(`Could not write to "${argv.out}", is it a valid file path?`);
             }
             process.exit(0);
           } else console.log(wpFile.source);
         } else process.exit(0);
       } catch {
-        console.error(`"${argv.file}" is not a valid file.`);
+        if (!argv.silent) console.error(`"${argv.file}" is not a valid file.`);
         process.exit(0);
       }
     } catch (error) {
-      console.error((error as TypeError).message);
+      if (!argv.silent) console.error((error as TypeError).message);
       process.exit(0);
     }
   }
@@ -81,8 +95,14 @@ const argv = yargs(process.argv.slice(2))
   command: "test [file]",
   aliases: ["check"],
   describe: "Gets the file or all files in srcDirectory and runs it through all middlewares, and logs the errors",
-  builder: (yargs: Argv) => yargs.default("project", "default.wiki.js").string("file").describe("project", "The path to the project (.wiki.js) file").describe("file", "The file to be checked"),
+  builder: (yargs: Argv) => yargs.default("project", "default.wiki.js")
+    .string("file")
+    .default("silent", true)
+    .describe("project", "The path to the project (.wiki.js) file")
+    .describe("file", "The file to be checked")
+    .describe("silent", "Whether or not it shouldn't log errors"),
   handler: async (argv) => {
+    
   }
 })
 .help(true)

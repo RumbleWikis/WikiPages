@@ -179,11 +179,12 @@ Proper events were added in **v0.2** with the addition of extending the `Evt` cl
 ```typescript
 export class Client extends Evt<
 ["ready", undefined] | 
-["loginError", { error: any }] |
+["loginError", { error: unknown }] |
 ["runningStarted", undefined] | 
 ["runningEnded", undefined] |
-["editError", { file: WPFile, error: any}] |
-["createError", { file: WPFile, error: any}]
+["editError", { file: WPFile, error: unknown}] |
+["createError", { file: WPFile, error: unknown}] |
+["middlewareError", { file: WPFile, error: unknown}]
 >
 ```
 
@@ -213,6 +214,8 @@ The available event names are:
 * `runningEnded`
   * `undefined`
 * `editError`
-  * `{ file: WPFile, error: any }`
+  * `{ file: WPFile, error: unknown }`
 * `createError`
-  * `{ file: WPFile, error: any }`
+  * `{ file: WPFile, error: unknown }`
+* `middlewareError`
+  * `{ file: W{File, error: unknown }}`

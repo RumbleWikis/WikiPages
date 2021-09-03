@@ -95,7 +95,7 @@ export interface Middleware {
 /**
  * Credentials for the Client, such as username or password.
  */
-export interface ClientCredentials {
+export interface ClientCredentialsOptions {
   /**
    * The username for the account, ex: `TotallyNotBot`, can also be a username from [Special:BotPasswords](https://www.mediawiki.org/wiki/Manual:Bot_passwords).
    */
@@ -115,35 +115,55 @@ export interface ClientCredentials {
 }
 
 /**
+ * Path options for the Client.
+ */
+export interface ClientPathOptions {
+  /**
+   * The directory to look for the source in.
+   */
+   srcDirectory: string;
+   /**
+    * The path to the file to place and search for file MD5 cache in.
+    */
+   cacheFile: string;
+  /**
+   * Namespace mappings, an empty value for namespace will default to the main Namespace.
+   * 
+   * This can be used for non-english wikis or other uses.
+   */
+   namespaceMappings?: Record<string, string>
+}
+
+/**
+ * API options for the Client.
+ */
+export interface ClientAPIOptions {
+  /**
+   * The maximum allowed of retries, will quit trying after the maximum allowed retries.
+   */
+   maxRetries?: number;
+   /**
+    * The timeout between performed edits. Default is 10s (10000ms).
+    */
+   editTimeout?: number;
+}
+
+/**
  * Options for the Client.
  */
 export interface ClientOptions {
   /**
    * Credentials for the Client, such as username or password.
    */
-  credentials: ClientCredentials;
+  credentials: ClientCredentialsOptions;
   /**
-   * The directory to look for the source in.
+   * Path options for the Client, such as namespaceMappings, or cacheFilePath.
    */
-  srcDirectory: string;
+  path: ClientPathOptions;
   /**
-   * The path to the file to place and search for file MD5 cache in.
+   * API options for the Client, such as maxRetries and editTimeout.
    */
-  cacheFilePath: string;
-  /**
-   * The maximum allowed of retries, will quit trying after the maximum allowed retries.
-   */
-  maxRetries?: number;
-  /**
-   * The timeout between performed edits. Default is 10s (10000ms).
-   */
-  editTimeout?: number;
-  /**
-   * Namespace mappings, an empty value for namespace will default to the main Namespace.
-   * 
-   * This can be used for non-english wikis or other uses.
-   */
-  namespaceMappings?: Record<string, string>
+  api?: ClientAPIOptions;
   /**
    * Middleware settings for middleware, see https://github.com/RumbleWikis/WikiPages#Middlewares for more info.
    */
