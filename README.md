@@ -12,7 +12,7 @@
     <p>
       <a href="//github.com/RumbleWikis/WikiPages-Middleware">Middlewares repository</a>
       <br />
-      <a href="//github.com/RumbleWikis/WikiPages/wiki">Wiki <b>(in dev)</b></a>
+      <a href="//github.com/RumbleWikis/WikiPages/wiki">Wiki <b>(in development)</b></a>
     </p>
 </div>
 
