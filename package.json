@@ -1,6 +1,6 @@
 {
   "name": "@rumblewikis/wikipages",
-  "description": "Advance complex page editing on a MediaWiki instance",
+  "description": "Advance page editing on a MediaWiki instance",
   "version": "0.3.0",
   "main": "out/index.js",
   "types": "out/index.d.ts",

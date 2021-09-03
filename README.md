@@ -3,7 +3,7 @@
     <p>
         <b>WikiPages</b>
         <br />
-        Sync wiki pages on a <b>MediaWiki wiki</b> with possible <b>configurations</b> and <b>middleware</b> from a filesystem, upon <b>call</b>
+        Advance <b>page editing</b> on a <i>MediaWiki</i> instance
     </p>
     <p>
         <a href="//github.com/RumbleWikis/WikiPages/blob/main/LICENSE"><image src="https://img.shields.io/github/license/RumbleWikis/WikiPages" /></a>

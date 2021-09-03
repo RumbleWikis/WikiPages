@@ -18,7 +18,8 @@ const argv = yargs(process.argv.slice(2))
   command: "run",
   aliases: ["start"],
   describe: "Gets all files in the specified srcDirectory and pushes them to the Wiki",
-  builder: (yargs: Argv) => yargs.default("project", "default.wiki.js")
+  builder: (yargs: Argv) => yargs
+    .default("project", "default.wiki.js")
     .default("comment", "Commit via WikiPages CLI")
     .default("silent", true)
     .describe("project", "The path to the project (.wiki.js) file")
@@ -42,7 +43,8 @@ const argv = yargs(process.argv.slice(2))
 .command({
   command: "build [file]",
   describe: "Gets the file and runs it through all middlewares, logs the errors, and will write to file if out is specified",
-  builder: (yargs: Argv) => yargs.default("project", "default.wiki.js")
+  builder: (yargs: Argv) => yargs
+    .default("project", "default.wiki.js")
     .default("silent", true)
     .string("out")
     .string("file")
@@ -95,14 +97,15 @@ const argv = yargs(process.argv.slice(2))
   command: "test [file]",
   aliases: ["check"],
   describe: "Gets the file or all files in srcDirectory and runs it through all middlewares, and logs the errors",
-  builder: (yargs: Argv) => yargs.default("project", "default.wiki.js")
+  builder: (yargs: Argv) => yargs
+    .default("project", "default.wiki.js")
     .string("file")
     .default("silent", true)
     .describe("project", "The path to the project (.wiki.js) file")
     .describe("file", "The file to be checked")
     .describe("silent", "Whether or not it shouldn't log errors"),
   handler: async (argv) => {
-    
+
   }
 })
 .help(true)
