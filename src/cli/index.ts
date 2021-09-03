@@ -141,11 +141,11 @@ const argv = yargs(process.argv.slice(2))
         console.log(`Finished checking ${files.length} files`);
         process.exit(0);
       } catch (error) {
-        if (!argv.silent) console.error(error.message);
+        if (!argv.silent) console.error((error as Error).message);
         process.exit(0);
       }
     } catch (error) {
-      if (!argv.silent) console.error(error.message);
+      if (!argv.silent) console.error((error as Error).message);
       process.exit(0);
     }
   }
