@@ -28,11 +28,15 @@ Middlewares are a great way to implement things not implemented by the base pack
 To install middleware into a Client, define the `middlewares` property, and `middlewareSettings` if the middleware requires settings.
 ```ts
 const wikipedia = new Client({
-  apiUrl: "https://en.wikipedia.org/api.php",
-  username: "Example",
-  password: "Example2",
-  srcDirectory: "Wikipedia/src/pages",
-  cacheFile: "md5cache.json",
+  credentials: {
+    apiUrl: "https://en.wikipedia.org/api.php",
+    username: "Example",
+    password: "Example2",
+  }
+  path: {
+    srcDirectory: "Wikipedia/src/pages",
+    cacheFile: "md5cache.json",
+  }
   middlewares: [middleware],
   middlewareSettings: {
     "sass": {
