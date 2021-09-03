@@ -32,11 +32,11 @@ const wikipedia = new Client({
     apiUrl: "https://en.wikipedia.org/api.php",
     username: "Example",
     password: "Example2",
-  }
+  },
   path: {
     srcDirectory: "Wikipedia/src/pages",
     cacheFile: "md5cache.json",
-  }
+  },
   middlewares: [middleware],
   middlewareSettings: {
     "sass": {
