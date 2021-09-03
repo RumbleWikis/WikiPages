@@ -127,7 +127,7 @@ const argv = yargs(process.argv.slice(2))
               });
               try {
                 await client.buildFile(wpFile);
-                console.log(`File ${file} had ${wpFile.errors.length} errors, succeeded: ${wpFile.shouldCommit}`);
+                console.log(`File ${file} had ${wpFile.errors.length} errors, succeeded: ${wpFile.shouldCommit}, new path: ${wpFile.path}`);
                 if (wpFile.errors.length && (argv.silent === "false")) wpFile.errors.forEach(error => console.error(error));
               } catch {
                 if (argv.silent === "false") console.error(`An error occurred while building "${file}"`);
