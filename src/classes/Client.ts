@@ -23,11 +23,15 @@ export class Client extends Evt<
    * Creates a new WikiPages Client and logs in with a Promise
    * ```
    * Client.init({
-   *   username: "Username",
-   *   password: "Password",
-   *   srcDirectory: "src/",
-   *   cacheFilePath: "cache.json",
-   *   apiUrl: "https://en.wikipedia.org/api.php",
+   *   credentials: {
+   *     username: "Username",
+   *     password: "Password",
+   *     apiUrl: "https://en.wikipedia.org/api.php"
+   *   },
+   *   path: {
+   *     srcDirectory: "src",
+   *     cacheFilePath: "cache.json"
+   *   }
    * }).then((client) => {
    *   ...
    * }).catch((error) => {
@@ -92,11 +96,15 @@ export class Client extends Evt<
    * Create a new WikiPages client.
    * ```
    * const instance = new Client({
-   *   username: "Username",
-   *   password: "Password",
-   *   srcDirectory: "src/",
-   *   cacheFilePath: "cache.json",
-   *   apiUrl: "https://en.wikipedia.org/api.php",
+   *   credentials: {
+   *     username: "Username",
+   *     password: "Password",
+   *     apiUrl: "https://en.wikipedia.org/api.php"
+   *   },
+   *   path: {
+   *     srcDirectory: "src",
+   *     cacheFilePath: "cache.json"
+   *   }
    * })
    * ```
    * @param options - The client options.

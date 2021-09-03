@@ -44,6 +44,8 @@ const wikipedia = new Client({
 
 The **middleware** being a Record with the following fields:
 
+* `type: "Middleware"`
+  * Type of the middleware.
 * `matchShortExtension?: RegExp | string`
   * The RegExp/string to match in the short extension,  ex `.lua`, not including `.client.lua`.
 * `matchLongExtension?: RegExp | string`
@@ -52,7 +54,7 @@ The **middleware** being a Record with the following fields:
   * The Regexp/string to match in the path of the file
 * `settingsIndex?: string`
   * The settings index to index `middlewareSettings` with.
-* `execute: (file: WPFile, settings?: Record<string, unknown>) => WPFile`
+* `execute: (file: WPFile, settings?: Record<string, unknown>) => WPFile | Promise<WPFile>`
 
 The `settings` will index the `middlewareSettings` on the client with `settingsIndex` if defined, and define it as the parameter.
 
@@ -92,7 +94,7 @@ An example of a middleware is:
 ```
 
 # Documentation
-<div align="center">NOTICE: This documentation is as of v0.2, usage may change drastically as it reaches a full release</div>
+<div align="center">NOTICE: This documentation is as of v0.3, usage may change drastically as it reaches a full release</div>
 
 ## Path Resolving
 MediaWiki's URL paths are not delightful to look at, this repository will <b>not</b> handle it the same way. (i.e:  MediaWiki's used format allows for `Module:Test` and `Module:Test/doc` to exist simultaneously as files).
@@ -100,8 +102,17 @@ MediaWiki's URL paths are not delightful to look at, this repository will <b>not
 * The highest ancestor of a file will determine the namespace it will be located at (i.e: `{srcDirectory}/Module/Test.lua` will be located at `Module:Test`)
 * The extension of all files will be removed from the filename except for the `.js` and `.css` extensions.
 * If the highest ancestor is the same value as `mainDirectory`, by default "Main", it will be considered to be in the main namespace (i.e: `{srcDirectory}/Main/Doggy.wikitext` will be located at `Doggy`).
+* In version 0.3.0, custom **namespace mapping** were added. If the top namespace matched an index in `namespaceMappings`, it would replace the namespace with the value.
 * If a file's basename is the same string as its direct parent, it will be considered to have the path of its directory (i.e: `{srcDirectory}/Module/Test/Test.lua` will be located at `Module:Test`).
 * If a file's extension is `.doc.wikitext`, it will be located at its basename appeneded by `/doc`
+
+## Command-line interface
+In version 0.3.0, support was added for a **command-line interface** (CLI). You can install it with `npm install -g @rumblewikis/wikipages`.
+
+The bin command for the CLI is `wikipages`, use `wikipages --help` for help.
+
+### Project files (.wiki.js)
+The project files used by the CLI are `.wiki.js` files. They would export the interface as the ClientOptions in the Client constructor.
 
 ## Setup
 ### Starters
@@ -123,37 +134,50 @@ MediaWiki's URL paths are not delightful to look at, this repository will <b>not
 5. Create a new client, types can be found in the [types.ts file](https://github.com/RumbleWikis/WikiPages/blob/main/src/types.ts)
      ```js
      const wikipedia = new Client({
-       apiUrl: "https://en.wikipedia.org/api.php",
-       username: "Example",
-       password: "Example2",
-       srcDirectory: "Wikipedia/src/pages",
-       cacheFile: "md5cache.json"
+       credentials: {
+         username: "Example",
+         password: "Example2",
+         apiUrl: "https://en.wikipedia.org/api.php"
+       },
+       path: {
+         srcDirectory: "Wikipedia/src/pages",
+         cacheFile: "md5cache.json"
+       }
      });
      ```
      
 ## Client Object
-A new client can be constructed with the parameters:
-`new Client(options: ClientOptions)`
-* `username: string`
-  * The username for the account, ex: `TotallyNotBot`, can also be a username from [Special:BotPasswords](https://www.mediawiki.org/wiki/Manual:Bot_passwords).
-* `password: string`
-  * The password for the account, ex: `Password123`, can also be a password from [Special:BotPasswords](https://www.mediawiki.org/wiki/Manual:Bot_passwords)/
-* `apiUrl: string`
-  * The API url for the MediaWiki wiki, add /api.php to the base URL of the site, ex: `https://en.wikipedia.org/api.php`.
-* `srcDirectory: string`
-  * The directory to look for the source in.
-* `cacheFIle: string`
-  * The path to the file to place and search for cache in.
-* `userAgent: string`
-  * The user agent for all requests, use this to identify where the requests originate from.
+A new client can be constructed and automatically login with:
+`static async Client.init(options: ClientOptions): Client`
+* `credentials: ClientCredentialsOptions`
+  * `username: string`
+    * The username for the account, ex: `TotallyNotBot`, can also be a username from [Special:BotPasswords](https://www.mediawiki.org/wiki/Manual:Bot_passwords).
+  * `password: string`
+    * The password for the account, ex: `Password123`, can also be a password from [Special:BotPasswords](https://www.mediawiki.org/wiki/Manual:Bot_passwords)/
+  * `apiUrl: string`
+    * The API url for the MediaWiki wiki, add /api.php to the base URL of the site, ex: `https://en.wikipedia.org/api.php`.
+  * `userAgent: string`
+    * The user agent for all requests, use this to identify where the requests originate from.
+* `path: ClientPathOptions`
+  * `srcDirectory: string`
+    * The directory to look for the source in.
+  * `cacheFIle: string`
+    * The path to the file to place and search for cache in.
+  * `namespaceMappings?: Record<string, string>`
+    * Namespace mappings to map namespaces to.
+* `api: ClientAPIOptions`
+  * `maxRetries?: number`
+    * The maximum allowed of retries, will quit trying after the maximum allowed retries.
+  * `editInterval?: number`
+    * The timeout between each attempted edit.
 * `middlewareSettings?: Record<string, Record<string, any>>`
   * Middleware settings for middleware, see https://github.com/RumbleWikis/WikiPages#Middlewares for more info
-* `maxRetries?: number`
-  * The maximum allowed of retries, will quit trying after the maximum allowed retries.
-* `mainNamespace?: string`
-  * The main namespace, `(main)` on MediaWiki, default `Main`.
 * `middlewares?: Middleware[]`
-  * The array of middleware to add, see https://github.com/RumbleWikis/WikiPages#Middlewares for more info.
+  * The array of middleware to add, see https://github.com/RumbleWikis/WikiPages#Middlewares for more info. 
+or from a file path:
+`Client.initFromFile(filePath: string): Client`
+or just constructed:
+`new Client(options: ClientOptions)`
  
 `public clientOptions: ClientOptions`
 * Client options for the client, this can be changed later **when** the client is not running.
@@ -172,7 +196,13 @@ A new client can be constructed with the parameters:
 `public addMiddlewares(...middlware: Middleware[]): void`
 * Add new middleware to the existing middlewares array. This can not be run while an instance is already active.
 
-`public run(commitComment: string): Promise<void>`
+`public parseFileName(fileName: string): ParsedFileNameInformation`
+* Parses a file name from a file system directory to MediaWiki directory
+
+`public buildFile(file: WPFile): Promise<WPFile>`
+Passes a file through all middlewares
+
+`public async run(commitComment: string): Promise<void>`
 * Run the bot, going through all middlewares, and then pushing the files with `shouldCommit` as true to the site. This can not be run while an instance is already active.
 
 ### Events
