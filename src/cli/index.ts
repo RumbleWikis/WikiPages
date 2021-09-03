@@ -22,21 +22,21 @@ const argv = yargs(process.argv.slice(2))
   builder: (yargs: Argv) => yargs
     .default("project", "default.wiki.js")
     .default("comment", "Commit via WikiPages CLI")
-    .default("silent", true)
+    .default("silent", "true")
     .describe("project", "The path to the project (.wiki.js) file")
     .describe("comment", "The default commit (or edit) summary")
     .describe("silent", "Whether or not it shouldn't log errors"),
   handler: async (argv) => {
     try {
       const client = await Client.initFromFile(argv.project);
-      if (!argv.silent) client.$attach(to("middlewareError"), (error) => console.log(`middlewareError: ${error.error}`));
-      if (!argv.silent) client.$attach(to("editError"), (error) => console.log(`editError: ${error.error}`));
-      if (!argv.silent) client.$attach(to("createError"), (error) => console.log(`editError: ${error.error}`));
+      if (argv.silent === "false") client.$attach(to("middlewareError"), (error) => console.log(`middlewareError: ${error.error}`));
+      if (argv.silent === "false") client.$attach(to("editError"), (error) => console.log(`editError: ${error.error}`));
+      if (argv.silent === "false") client.$attach(to("createError"), (error) => console.log(`editError: ${error.error}`));
       await client.run(argv.comment);
       console.log(`Finished pushing to ${client.clientOptions!.credentials.apiUrl}`);
       process.exit(0);
     } catch (error) {
-      if (!argv.silent) console.error((error as TypeError).message);
+      if (argv.silent === "false") console.error((error as TypeError).message);
       process.exit(0);
     }
   }
@@ -46,7 +46,7 @@ const argv = yargs(process.argv.slice(2))
   describe: "Gets the file and runs it through all middlewares, logs the errors, and will write to file if out is specified",
   builder: (yargs: Argv) => yargs
     .default("project", "default.wiki.js")
-    .default("silent", true)
+    .default("silent", "true")
     .string("out")
     .string("file")
     .demandOption("file")
@@ -71,7 +71,7 @@ const argv = yargs(process.argv.slice(2))
 
         client.buildFile(wpFile);
 
-        if (!argv.silent && wpFile.errors.length)
+        if ((argv.silent === "false") && wpFile.errors.length)
           wpFile.errors.forEach(console.log); 
         
         if (wpFile.shouldCommit) { 
@@ -80,17 +80,17 @@ const argv = yargs(process.argv.slice(2))
               fs.writeFileSync(argv.out, wpFile.source!);
               console.log(`Wrote to ${argv.out}`);
             } catch {
-              if (!argv.silent) console.error(`Could not write to "${argv.out}", is it a valid file path?`);
+              if (argv.silent === "false") console.error(`Could not write to "${argv.out}", is it a valid file path?`);
             }
             process.exit(0);
           } else console.log(wpFile.source);
         } else process.exit(0);
       } catch {
-        if (!argv.silent) console.error(`"${argv.file}" is not a valid file.`);
+        if (argv.silent === "false") console.error(`"${argv.file}" is not a valid file.`);
         process.exit(0);
       }
     } catch (error) {
-      if (!argv.silent) console.error((error as TypeError).message);
+      if (argv.silent === "false") console.error((error as TypeError).message);
       process.exit(0);
     }
   }
@@ -101,8 +101,8 @@ const argv = yargs(process.argv.slice(2))
   describe: "Gets the file or all files in srcDirectory and runs it through all middlewares, and logs the errors",
   builder: (yargs: Argv) => yargs
     .default("project", "default.wiki.js")
+    .default("silent", "true")
     .string("file")
-    .string("silent")
     .describe("project", "The path to the project (.wiki.js) file")
     .describe("file", "The file to be checked")
     .describe("silent", "Whether or not it shouldn't log errors"),
@@ -127,12 +127,12 @@ const argv = yargs(process.argv.slice(2))
               try {
                 await client.buildFile(wpFile);
                 console.log(`File ${file} had ${wpFile.errors.length} errors`);
-                if (wpFile.errors.length && !argv.silent) wpFile.errors.forEach(error => console.error(error));
+                if (wpFile.errors.length && (argv.silent === "false")) wpFile.errors.forEach(error => console.error(error));
               } catch {
-                if (argv.silent) console.error(`An error occurred while building "${file}"`);
+                if (argv.silent === "false") console.error(`An error occurred while building "${file}"`);
               }
             } catch {
-              if (!argv.silent) console.error(`"${file}" is not a valid file.`);
+              if (argv.silent === "false") console.error(`"${file}" is not a valid file.`);
             }
             return;
           })()); 
@@ -141,11 +141,11 @@ const argv = yargs(process.argv.slice(2))
         console.log(`Finished checking ${files.length} files`);
         process.exit(0);
       } catch (error) {
-        if (!argv.silent) console.error((error as Error).message);
+        if (argv.silent === "false") console.error((error as Error).message);
         process.exit(0);
       }
     } catch (error) {
-      if (!argv.silent) console.error((error as Error).message);
+      if (argv.silent === "false") console.error((error as Error).message);
       process.exit(0);
     }
   }

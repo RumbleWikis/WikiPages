@@ -1,11 +1,10 @@
 import { mwn } from "mwn";
 import * as fs from "fs";
-import { is } from 'typescript-is';
 import { promisify } from "util";
 import getAllFiles from "../utils/getAllFiles";
 import md5Hash from "../utils/md5Hash";
 import { Evt, to } from "evt";
-import { basename, dirname, extname } from "path";
+import { basename, dirname, extname, resolve } from "path";
 import { WPFile } from "./WPFile";
 import type { ClientOptions, Middleware, ParsedFileNameInformation } from "../types";
 
@@ -53,9 +52,8 @@ export class Client extends Evt<
    * @param filePath - The path to the .wiki.js or similar
    */
   static initFromFile(filePath: string): Promise<Client> {
-    const fileReturn = require(filePath);
+    const fileReturn = require(resolve(process.cwd(), filePath));
     if (!fileReturn) throw new Error(`"${filePath}" must return an object.`);
-    if (!is<ClientOptions>(fileReturn)) throw new TypeError(`Options does not follow the required schema for ClientOptions, please see the documentation.`);
 
     return this.init(fileReturn);
   }
