@@ -122,6 +122,7 @@ export class Client extends Evt<
   public async login(): Promise<void> {
     try {
       await this._mwnClient!.login();
+      this._initialized = true;
       this.post(["ready", undefined]);
       return;
     } catch (error) {
