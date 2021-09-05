@@ -22,7 +22,7 @@ export class Client extends Evt<
 ["middlewareError", { file: WPFile, error: unknown }]
 > {
   /**
-   * Creates a new WikiPages Client and logs in with a Promise
+   * Creates a new WikiPages Client and login
    * ```
    * Client.init({
    *   credentials: {
@@ -53,7 +53,18 @@ export class Client extends Evt<
   }
 
   /**
-   * Init a new Client from a given path
+   * Create a new Client from a given path
+   * @param filePath - The path to the .wiki.js or similar
+   */
+  static newFromFile(filePath: string): Client {
+    const fileReturn = require(resolvePath(process.cwd(), filePath));
+    if (!fileReturn) throw new Error(`"${filePath}" must return an object.`);
+
+    return new this(fileReturn);
+  }
+
+  /**
+   * Create a new Client from a given path and login
    * @param filePath - The path to the .wiki.js or similar
    */
   static initFromFile(filePath: string): Promise<Client> {

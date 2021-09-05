@@ -102,7 +102,7 @@ An example of a middleware is:
 ```
 
 # Documentation
-<div align="center">NOTICE: This documentation is as of v0.3, usage may change drastically as it reaches a full release</div>
+<div align="center">NOTICE: This documentation is as of v0.3.1, usage may change drastically as it reaches a full release</div>
 
 ## Path Resolving
 MediaWiki's URL paths are not delightful to look at, this repository will <b>not</b> handle it the same way. (i.e:  MediaWiki's used format allows for `Module:Test` and `Module:Test/doc` to exist simultaneously as files).
@@ -156,7 +156,7 @@ The project files used by the CLI are `.wiki.js` files. They would export the in
      
 ## Client Object
 A new client can be constructed and automatically login with:
-`static async Client.init(options: ClientOptions): Client`
+`static async Client.init(options: ClientOptions): Promise<Client>`
 * `credentials: ClientCredentialsOptions`
   * `username: string`
     * The username for the account, ex: `TotallyNotBot`, can also be a username from [Special:BotPasswords](https://www.mediawiki.org/wiki/Manual:Bot_passwords).
@@ -178,12 +178,14 @@ A new client can be constructed and automatically login with:
     * The maximum allowed of retries, will quit trying after the maximum allowed retries.
   * `editInterval?: number`
     * The timeout between each attempted edit.
-* `middlewareSettings?: Record<string, Record<string, any>>`
+* `middlewareSettings?: Record<string, Record<string, unknown>>`
   * Middleware settings for middleware, see https://github.com/RumbleWikis/WikiPages#Middlewares for more info
 * `middlewares?: Middleware[]`
   * The array of middleware to add, see https://github.com/RumbleWikis/WikiPages#Middlewares for more info. 
+or from a file path and login:
+`Client.initFromFile(filePath: string): Promise<Client>`
 or from a file path:
-`Client.initFromFile(filePath: string): Client`
+`Client.newFromFile(filePath: string): Client`
 or just constructed:
 `new Client(options: ClientOptions)`
  
