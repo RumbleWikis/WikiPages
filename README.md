@@ -20,6 +20,7 @@
 * [mwn](https://www.npmjs.com/package/mwn)
 * [Evt](https://www.npmjs.com/package/evt)
 * [yargs](https://www.npmjs.com/package/yargs)
+* [chalk](https://www.npmjs.com/package/chalk)
 
 # Middlewares
 A list of approved middleware can be found [here](https://github.com/RumbleWikis/WikiPages-Middleware)
@@ -77,7 +78,9 @@ The file is a **class**, and has parameters that can directly be modified, or wi
 * `public commitComment: string`
   * The default (or modified) comment for the MediaWiki commit, "edit comment".
 * `public path: string`
-  * THe MediaWiki path of where the page would be. (MediaWiki/Common.js -> MediaWiki:Common.js)
+  * THe MediaWiki path of where the page would be. (MediaWiki/Common.js -> MediaWiki:Common.js
+* `public errors: Error[]`
+  * An array of the errors given from middlewares.
 * `public source: string`
   * The source string of the file, intended to be modified by middlewares.
 * `public change(options: WPFileChangeOptions): WPFile`

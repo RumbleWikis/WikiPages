@@ -1,11 +1,11 @@
 #! /usr/bin/env node
-import yargs from "yargs/yargs";
-import { Client, to, WPFile } from "../index";
 import * as process from "process";
 import * as fs from "fs";
 import { resolve as resolvePath } from "path";
+import { Client, to, WPFile } from "../index";
+import yargs from "yargs/yargs";
 import getAllFiles from "../utils/getAllFiles";
-import { Argv } from "yargs";
+import type { Argv } from "yargs";
 
 const argv = yargs(process.argv.slice(2))
 .scriptName("wikipages")

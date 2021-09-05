@@ -1,20 +1,22 @@
-import { mwn } from "mwn";
 import * as fs from "fs";
+import { basename, dirname, extname, resolve as resolvePath } from "path";
+import { mwn } from "mwn";
+import { Evt, to } from "evt";
+import { WPFile } from "./WPFile";
 import getAllFiles from "../utils/getAllFiles";
 import md5Hash from "../utils/md5Hash";
-import { Evt, to } from "evt";
-import { basename, dirname, extname, resolve as resolvePath } from "path";
-import { WPFile } from "./WPFile";
 import type { ClientOptions, Middleware, ParsedFileNameInformation } from "../types";
+
+export { to };
 
 /**
  * The WikiPages Client.
  */
 export class Client extends Evt<
 ["ready", undefined] | 
-["loginError", { error: unknown }] |
 ["runningStarted", undefined] | 
 ["runningEnded", undefined] |
+["loginError", { error: unknown }] |
 ["editError", { file: WPFile, error: unknown }] |
 ["createError", { file: WPFile, error: unknown }] |
 ["middlewareError", { file: WPFile, error: unknown }]
@@ -327,5 +329,3 @@ export class Client extends Evt<
     })
   }
 }
-
-export { to };

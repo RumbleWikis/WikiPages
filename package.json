@@ -21,6 +21,7 @@
     "prepack": "tsc || echo"
   },
   "dependencies": {
+    "chalk": "^4.1.2",
     "evt": "^1.10.1",
     "mwn": "^1.11.4",
     "yargs": "^17.1.1"
