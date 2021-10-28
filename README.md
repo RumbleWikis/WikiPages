@@ -6,13 +6,13 @@
         Advance <b>page editing</b> on a <i>MediaWiki</i> instance
     </p>
     <p>
-        <a href="//github.com/RumbleWikis/WikiPages/blob/main/LICENSE"><image src="https://img.shields.io/github/license/RumbleWikis/WikiPages" /></a>
+        <a href="//github.com/MetaWikis/WikiPages/blob/main/LICENSE"><image src="https://img.shields.io/github/license/MetaWikis/WikiPages" /></a>
         <a href="//www.npmjs.com/package/@rumblewikis/wikipages"><img src="https://img.shields.io/npm/v/@rumblewikis/wikipages.svg?maxAge=3600" /></a>
     </p>
     <p>
-      <a href="//github.com/RumbleWikis/WikiPages-Middleware">Middlewares repository</a>
+      <a href="//github.com/MetaWikis/WikiPages-Middleware">Middlewares repository</a>
       <br />
-      <a href="//github.com/RumbleWikis/WikiPages/wiki">Wiki <b>(in development)</b></a>
+      <a href="//github.com/MetaWikis/WikiPages/wiki">Wiki <b>(in development)</b></a>
     </p>
 </div>
 
@@ -23,7 +23,7 @@
 * [chalk](https://www.npmjs.com/package/chalk)
 
 # Middlewares
-A list of approved middleware can be found [here](https://github.com/RumbleWikis/WikiPages-Middleware)
+A list of approved middleware can be found [here](https://github.com/MetaWikis/WikiPages-Middleware)
 
 Middlewares are a great way to implement things not implemented by the base package, such as compiling SASS files, or bundling TypeScript files. Middleware is extremely easy to make with a simple format, and will be called in order per file.
 
@@ -139,7 +139,7 @@ The project files used by the CLI are `.wiki.js` files. They would export the in
       ```ts
       import { Client } from "@rumblewikis/wikipages"
       ```
-5. Create a new client, types can be found in the [types.ts file](https://github.com/RumbleWikis/WikiPages/blob/main/src/types.ts)
+5. Create a new client, types can be found in the [types.ts file](https://github.com/MetaWikis/WikiPages/blob/main/src/types.ts)
      ```js
      const wikipedia = new Client({
        credentials: {
@@ -179,9 +179,9 @@ A new client can be constructed and automatically login with:
   * `editInterval?: number`
     * The timeout between each attempted edit.
 * `middlewareSettings?: Record<string, Record<string, unknown>>`
-  * Middleware settings for middleware, see https://github.com/RumbleWikis/WikiPages#Middlewares for more info
+  * Middleware settings for middleware, see https://github.com/MetaWikis/WikiPages#Middlewares for more info
 * `middlewares?: Middleware[]`
-  * The array of middleware to add, see https://github.com/RumbleWikis/WikiPages#Middlewares for more info. 
+  * The array of middleware to add, see https://github.com/MetaWikis/WikiPages#Middlewares for more info. 
 or from a file path and login:
 `Client.initFromFile(filePath: string): Promise<Client>`
 or from a file path:
